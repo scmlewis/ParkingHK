@@ -1,4 +1,4 @@
-import { ParkingLot } from '../../src/domain/types';
+import { ParkingLot } from '../domain/types';
 
 export const HK_CARPARK_SEED_DATA: ParkingLot[] = [
   // Tsim Sha Tsui / Yau Tsim Mong
