@@ -1,0 +1,5 @@
+{
+  "name": "ParkingHK | 泊好位",
+  "description": "Smart real-time Hong Kong parking guide with live vacancies, EV charger filters, duration pricing, and instant navigation.",
+  "requestFramePermissions": ["geolocation"]
+}
