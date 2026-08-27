@@ -112,6 +112,21 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number } | null>(null);
 
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    dragRef.current = { startX: e.clientX, startY: e.clientY };
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const deltaY = e.clientY - dragRef.current.startY;
+    const scrollEl = scrollRef.current;
+    const atTop = scrollEl ? scrollEl.scrollTop <= 0 : true;
+    if (atTop && deltaY > 80) {
+      onClose();
+    }
+    dragRef.current = null;
+  }, [onClose]);
+
   if (!scoredLot) return null;
 
   const { lot } = scoredLot;
@@ -141,21 +156,6 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
       window.open(`https://waze.com/ul?ll=${lot.latitude},${lot.longitude}&navigate=yes`, '_blank', 'noopener,noreferrer');
     }
   };
-
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    dragRef.current = { startX: e.clientX, startY: e.clientY };
-  }, []);
-
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    const deltaY = e.clientY - dragRef.current.startY;
-    const scrollEl = scrollRef.current;
-    const atTop = scrollEl ? scrollEl.scrollTop <= 0 : true;
-    if (atTop && deltaY > 80) {
-      onClose();
-    }
-    dragRef.current = null;
-  }, [onClose]);
 
   return (
     <AnimatePresence mode="wait">
