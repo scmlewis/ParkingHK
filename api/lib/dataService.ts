@@ -1,5 +1,5 @@
 import { HK_CARPARK_SEED_DATA } from './mockData';
-import { ParkingLot, Vacancy, VehicleType } from '../domain/types';
+import { ParkingLot, Vacancy, VehicleType } from '../../src/domain/types';
 
 // In-memory cache (per serverless function instance)
 interface CacheData {

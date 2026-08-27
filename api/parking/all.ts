@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCarParksBasic, getVacancies } from '../../src/server/dataService';
+import { getCarParksBasic, getVacancies } from '../lib/dataService';
 import { ParkingLot } from '../../src/domain/types';
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {

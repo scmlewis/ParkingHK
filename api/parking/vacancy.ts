@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getVacancies, forceVacancyRefresh } from '../../src/server/dataService';
+import { getVacancies, forceVacancyRefresh } from '../lib/dataService';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

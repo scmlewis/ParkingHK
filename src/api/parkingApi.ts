@@ -1,5 +1,5 @@
 import { ParkingLot, Vacancy } from '../domain/types';
-import { HK_CARPARK_SEED_DATA } from '../server/mockData';
+import { HK_CARPARK_SEED_DATA } from '../../api/lib/mockData';
 
 const CACHE_KEY_PARKING_LOTS = 'parkinghk_cached_lots_v1';
 const CACHE_KEY_LAST_FETCH = 'parkinghk_last_fetch_ts';
