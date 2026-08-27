@@ -444,7 +444,7 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
     };
   }, []);
 
-  // Update target circle and center marker
+  // Update target circle and center marker, and fly to new GPS position
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !targetLat || !targetLng) return;
@@ -468,6 +468,12 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
         icon: userIcon,
         zIndexOffset: 1000
       }).addTo(map);
+
+      // Fly to the first GPS fix
+      map.flyTo([targetLat, targetLng], Math.max(map.getZoom(), 15), {
+        duration: 1,
+        easeLinearity: 0.25
+      });
     }
 
     if (circleLayerRef.current) {

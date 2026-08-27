@@ -254,7 +254,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
             animate="visible"
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
-            className="p-5 space-y-5 overflow-y-auto flex-1 text-sm custom-modal-scrollbar overscroll-none touch-pan-x"
+            className="p-5 space-y-5 overflow-y-auto flex-1 text-sm custom-modal-scrollbar overscroll-contain"
           >
             {/* 1. Driver-Centric Hero Status & Action Card */}
             <motion.div
