@@ -7,18 +7,27 @@ interface VacancyBadgeProps {
   count: number | null;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  isClosed?: boolean;
 }
 
 export const VacancyBadge: React.FC<VacancyBadgeProps> = ({
   status,
   count,
   size = 'md',
-  className = ''
+  className = '',
+  isClosed = false
 }) => {
   const { t } = useI18n();
 
+  const effectiveStatus = isClosed ? 'CLOSED' : status;
+
   const getTheme = () => {
-    switch (status) {
+    switch (effectiveStatus) {
+      case 'CLOSED':
+        return {
+          bg: 'bg-rose-950/40 text-rose-400 border-rose-800/50',
+          dot: 'bg-rose-500 shadow-rose-500/50'
+        };
       case 'AVAILABLE':
         return {
           bg: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/50',
@@ -57,7 +66,9 @@ export const VacancyBadge: React.FC<VacancyBadgeProps> = ({
   }[size];
 
   let label = '';
-  if (count === null) {
+  if (isClosed) {
+    label = t.status.closed;
+  } else if (count === null) {
     label = t.status.unknown;
   } else if (count === 0) {
     label = t.status.full;

@@ -131,6 +131,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
             status={vacancyStatus}
             count={selectedVacancy?.vacancy ?? null}
             size="sm"
+            isClosed={lot.openingStatus === 'CLOSED'}
           />
         </div>
 

@@ -15,8 +15,7 @@ import {
   Truck,
   Bus,
   Check,
-  RotateCcw,
-  Sparkles
+  RotateCcw
 } from 'lucide-react';
 import { AppLogo } from '../common/AppLogo';
 import { useI18n } from '../../i18n/context';
@@ -93,7 +92,7 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
   }, []);
 
   const filteredDestinations = POPULAR_DESTINATIONS.filter(dest => {
-    if (!searchQuery.trim()) return dest.popular;
+    if (!searchQuery.trim()) return false;
     const q = searchQuery.toLowerCase().trim();
     return (
       dest.name.en.toLowerCase().includes(q) ||
@@ -373,48 +372,34 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
         {/* ── Search Dropdown ── */}
         {isSearchOpen && (
           <div className="mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto p-2 space-y-1.5">
-            {/* Quick Hotspots Chips */}
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar">
-              {POPULAR_DESTINATIONS.slice(0, 6).map(dest => (
-                <button
-                  key={dest.id}
-                  type="button"
-                  onClick={() => {
-                    onSelectDestination(dest);
-                    onSearchQueryChange('');
-                    setIsSearchOpen(false);
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-600 hover:text-white border border-slate-700 text-slate-300 text-[11px] font-semibold transition cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  {dest.name[lang]}
-                </button>
-              ))}
-            </div>
-
-            <div className="text-[10px] font-bold text-slate-400 px-2 py-0.5 uppercase tracking-wider">
-              {lang === 'tc' ? '熱門地點及地標' : 'Popular Destinations & Landmarks'}
-            </div>
-            {filteredDestinations.map(dest => (
-              <button
-                key={dest.id}
-                type="button"
-                onClick={() => {
-                  onSelectDestination(dest);
-                  onSearchQueryChange('');
-                  setIsSearchOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-200 text-xs flex items-center justify-between transition cursor-pointer"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span className="font-semibold text-slate-100 truncate">{dest.name[lang]}</span>
-                  <span className="text-[11px] text-slate-400 truncate">({dest.district[lang]})</span>
+            {filteredDestinations.length > 0 && (
+              <>
+                <div className="text-[10px] font-bold text-slate-400 px-2 py-0.5 uppercase tracking-wider">
+                  {lang === 'tc' ? '搜尋結果' : 'Search Results'}
                 </div>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0">
-                  {dest.district[lang]}
-                </span>
-              </button>
-            ))}
+                {filteredDestinations.map(dest => (
+                  <button
+                    key={dest.id}
+                    type="button"
+                    onClick={() => {
+                      onSelectDestination(dest);
+                      onSearchQueryChange('');
+                      setIsSearchOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-200 text-xs flex items-center justify-between transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span className="font-semibold text-slate-100 truncate">{dest.name[lang]}</span>
+                      <span className="text-[11px] text-slate-400 truncate">({dest.district[lang]})</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0">
+                      {dest.district[lang]}
+                    </span>
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         )}
 

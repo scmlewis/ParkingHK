@@ -130,13 +130,14 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
   if (!scoredLot) return null;
 
   const { lot } = scoredLot;
+  const isClosed = lot.openingStatus === 'CLOSED';
   const primaryVacancy = lot.vacancies.find(v => v.vehicleType === 'P') || lot.vacancies[0];
   const vacancyCount = primaryVacancy?.vacancy;
 
-  // Determine vacancy badge styling
-  const isFull = vacancyCount === 0;
-  const isLimited = vacancyCount !== null && vacancyCount !== undefined && vacancyCount > 0 && vacancyCount < 10;
-  const isAvailable = vacancyCount !== null && vacancyCount !== undefined && vacancyCount >= 10;
+  // Determine vacancy badge styling — closed lots override to rose
+  const isFull = isClosed ? false : vacancyCount === 0;
+  const isLimited = !isClosed && vacancyCount !== null && vacancyCount !== undefined && vacancyCount > 0 && vacancyCount < 10;
+  const isAvailable = !isClosed && vacancyCount !== null && vacancyCount !== undefined && vacancyCount >= 10;
   const isUnknown = vacancyCount === null || vacancyCount === undefined;
 
   const handleOpenGoogleMaps = () => {
@@ -258,7 +259,9 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                   <div className="flex items-center gap-2">
                     <span
                       className={`inline-block w-2.5 h-2.5 rounded-full ${
-                        isAvailable
+                        isClosed
+                          ? 'bg-rose-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]'
+                          : isAvailable
                           ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
                           : isLimited
                           ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'
@@ -269,7 +272,9 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                     />
                     <span
                       className={`text-2xl sm:text-3xl font-black tracking-tight ${
-                        isAvailable
+                        isClosed
+                          ? 'text-rose-400'
+                          : isAvailable
                           ? 'text-emerald-400'
                           : isLimited
                           ? 'text-amber-400'
@@ -278,10 +283,16 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                           : 'text-slate-300'
                       }`}
                     >
-                      {isUnknown ? (lang === 'tc' ? '實時未明' : 'Unknown') : isFull ? (lang === 'tc' ? '已泊滿' : 'Full') : vacancyCount}
+                      {isClosed
+                        ? (lang === 'tc' ? '已落閘' : 'Closed')
+                        : isUnknown
+                        ? (lang === 'tc' ? '實時未明' : 'Unknown')
+                        : isFull
+                        ? (lang === 'tc' ? '已泊滿' : 'Full')
+                        : vacancyCount}
                     </span>
                   </div>
-                  {!isUnknown && !isFull && (
+                  {!isClosed && !isUnknown && !isFull && (
                     <span className="text-xs font-bold text-slate-300">
                       {lang === 'tc' ? '個空位' : 'spaces'}
                     </span>
@@ -387,8 +398,8 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
               </motion.button>
             </motion.div>
 
-            {/* 3. Additional Vehicle Types (if available) */}
-            {lot.vacancies.length > 1 && (
+            {/* 3. Additional Vehicle Types (if available, and lot is open) */}
+            {lot.vacancies.length > 1 && !isClosed && (
               <motion.div variants={contentItemVariants}>
                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
                   <Car className="w-3.5 h-3.5 text-sky-400" />

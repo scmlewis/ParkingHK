@@ -358,6 +358,7 @@ export const ModernCarousel: React.FC<ModernCarouselProps> = ({
                     status={vacancyStatus}
                     count={selectedVacancy?.vacancy ?? null}
                     size="sm"
+                    isClosed={lot.openingStatus === 'CLOSED'}
                   />
 
                   {/* Actions: Navigation + Fav + Detail */}

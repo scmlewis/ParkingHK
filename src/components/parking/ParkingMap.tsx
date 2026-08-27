@@ -52,20 +52,22 @@ function createCarparkMarkerSvg(
   hourlyRate: number | undefined,
   hasEV: boolean | undefined,
   isSelected: boolean,
-  durationHours: number = 1
+  durationHours: number = 1,
+  isClosed: boolean = false
 ): string {
   let priceText = 'P';
   if (hourlyRate !== undefined) {
     const totalCost = hourlyRate * durationHours;
     priceText = `$${totalCost} · ${durationHours}h`;
   }
-  const statusColor =
+  const statusColor = isClosed ? '#64748b' :
     status === 'AVAILABLE' ? '#10b981' : status === 'LIMITED' ? '#f59e0b' : status === 'FULL' ? '#ef4444' : '#64748b';
-  const evIcon = hasEV ? `<span style="color:#38bdf8;font-size:10px;margin-right:2px;">⚡</span>` : '';
+  const evIcon = hasEV && !isClosed ? `<span style="color:#38bdf8;font-size:10px;margin-right:2px;">⚡</span>` : '';
   const statusDot = `<span class="price-pill-dot" style="background-color:${statusColor};"></span>`;
+  const opacity = isClosed ? 'opacity:0.55;' : '';
 
   return `
-    <div id="marker-lot-${lotId}" class="price-pill-marker ${isSelected ? 'selected' : ''}">
+    <div id="marker-lot-${lotId}" class="price-pill-marker ${isSelected ? 'selected' : ''}" style="${opacity}">
       ${evIcon}<span>${priceText}</span>${statusDot}
     </div>
   `;
@@ -593,7 +595,8 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
           lot.pricing?.hourlyRate,
           lot.facilities?.evCharging,
           isSelected,
-          parkingDurationHours
+          parkingDurationHours,
+          lot.openingStatus === 'CLOSED'
         );
 
         const customIcon = L.divIcon({
@@ -811,6 +814,7 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
                   status={selectedLot.vacancyStatus}
                   count={selectedLot.selectedVacancy?.vacancy ?? null}
                   size="sm"
+                  isClosed={selectedLot.lot.openingStatus === 'CLOSED'}
                 />
               </div>
 

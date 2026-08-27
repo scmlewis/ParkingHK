@@ -34,8 +34,11 @@ export function calculateParkingScore(
   }
 
   // 2. Availability score (out of 40)
+  // Closed lots get 0 — vacancies are irrelevant when the lot is not operating
   let availabilityScore = 0;
-  if (vacancyCount === null) {
+  if (lot.openingStatus === 'CLOSED') {
+    availabilityScore = 0;
+  } else if (vacancyCount === null) {
     // Unknown vacancy: baseline moderate score (15/40)
     availabilityScore = 15;
   } else if (vacancyCount === 0) {
