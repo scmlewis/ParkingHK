@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScoredParkingLot } from '../../domain/types';
 import { useI18n } from '../../i18n/context';
@@ -127,11 +127,20 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
     dragRef.current = null;
   }, [onClose]);
 
+  // Lock body scroll when modal is open on mobile
+  useEffect(() => {
+    if (scoredLot) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [scoredLot]);
+
   if (!scoredLot) return null;
 
   const { lot } = scoredLot;
   const isClosed = lot.openingStatus === 'CLOSED';
-  const primaryVacancy = lot.vacancies.find(v => v.vehicleType === 'P') || lot.vacancies[0];
+  const primaryVacancy = lot.vacancies.find(v => v.vehicleType === 'PRIVATE_CAR') || lot.vacancies[0];
   const vacancyCount = primaryVacancy?.vacancy;
 
   // Determine vacancy badge styling — closed lots override to rose
@@ -495,7 +504,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
               {lot.pricing?.paymentMethods && lot.pricing.paymentMethods.length > 0 && (
                 <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
                   <span className="text-[11px] text-slate-400 mr-0.5">
-                    {lang === 'tc' ? '支援付款：' : 'Payment:'}
+                    {t.detail.paymentLabel}:
                   </span>
                   {lot.pricing.paymentMethods.map((m, i) => (
                     <span

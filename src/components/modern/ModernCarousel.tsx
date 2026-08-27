@@ -20,7 +20,6 @@ interface ModernCarouselProps {
   selectedLot: ScoredParkingLot | null;
   onSelectLot: (lot: ScoredParkingLot) => void;
   onOpenDetail: (lot: ScoredParkingLot) => void;
-  onExplainScore: (lot: ScoredParkingLot) => void;
   isFavourite: (id: string) => boolean;
   onToggleFavourite: (id: string) => void;
   parkingDurationHours: number;

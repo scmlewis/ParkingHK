@@ -91,7 +91,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
               <span>EV</span>
             </span>
           )}
-          {lot.facilities?.isCovered && (
+          {lot.facilities?.covered && (
             <span className="text-[10px] font-medium px-1 py-0.5 rounded-md bg-slate-800/80 text-slate-400">
               {lang === 'tc' ? '室內' : 'Covered'}
             </span>

@@ -6,7 +6,6 @@ const STORAGE_SORT = 'parkinghk_sort_pref';
 const STORAGE_VEHICLE = 'parkinghk_vehicle_pref';
 
 export const INITIAL_FILTERS: FilterState = {
-  searchQuery: '',
   vehicleType: 'PRIVATE_CAR',
   district: 'ALL',
   region: 'ALL',

@@ -135,29 +135,6 @@ function MainApp() {
     [activeLat, activeLng]
   );
 
-  // Count lots currently inside visible map bounds
-  const visibleAreaLotsCount = useMemo(() => {
-    if (!mapBounds || !lots) return lots?.length ?? 0;
-    return lots.filter(
-      lot =>
-        lot.latitude &&
-        lot.longitude &&
-        lot.latitude <= mapBounds.north &&
-        lot.latitude >= mapBounds.south &&
-        lot.longitude <= mapBounds.east &&
-        lot.longitude >= mapBounds.west
-    ).length;
-  }, [lots, mapBounds]);
-
-  // Execute Area Search
-  const handleSearchThisArea = () => {
-    if (mapCenter) {
-      setCustomSearchLocation(mapCenter);
-      setDestination(null);
-      setIsMapMoved(false);
-    }
-  };
-
   // Score and calculate metrics for all lots using active location
   const scoredLots: ScoredParkingLot[] = useMemo(() => {
     return lots.map(lot => calculateParkingScore(lot, activeLat, activeLng, filters.vehicleType));
@@ -301,48 +278,6 @@ function MainApp() {
     });
   }, [scoredLots, searchQuery, filters, sortOption, mapBounds, customSearchLocation, isMapMoved]);
 
-  // Total search matches across all HK
-  const allHkSearchMatches = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase().trim();
-    return scoredLots.filter(item => {
-      const lot = item.lot;
-      return (
-        lot.name.en.toLowerCase().includes(q) ||
-        lot.name.tc.toLowerCase().includes(q) ||
-        lot.address.en.toLowerCase().includes(q) ||
-        lot.address.tc.toLowerCase().includes(q) ||
-        lot.district.en.toLowerCase().includes(q) ||
-        lot.district.tc.toLowerCase().includes(q)
-      );
-    });
-  }, [scoredLots, searchQuery]);
-
-  const outOfZoneMatchesCount = useMemo(() => {
-    if (!searchQuery.trim() || !filters.limitToMapZone || !mapBounds) return 0;
-    return allHkSearchMatches.filter(item => {
-      const lat = item.lot.latitude;
-      const lng = item.lot.longitude;
-      if (lat === null || lng === null) return true;
-      return !(lat <= mapBounds.north && lat >= mapBounds.south && lng <= mapBounds.east && lng >= mapBounds.west);
-    }).length;
-  }, [allHkSearchMatches, searchQuery, filters.limitToMapZone, mapBounds]);
-
-  const handleFlyToFirstSearchMatch = () => {
-    if (allHkSearchMatches.length > 0) {
-      const first = allHkSearchMatches[0];
-      if (first.lot.latitude && first.lot.longitude) {
-        setSelectedLotForDetail(first);
-        setZoomTarget({
-          lat: first.lot.latitude,
-          lng: first.lot.longitude,
-          zoom: 15.8,
-          timestamp: Date.now()
-        });
-      }
-    }
-  };
-
   // Favourites lots
   const favouriteLots = useMemo(() => {
     return scoredLots.filter(item => favouriteIds.includes(item.lot.id));
@@ -423,6 +358,8 @@ function MainApp() {
               onSelectDistrictZoom={handleDistrictZoom}
               currentZoom={currentMapZoom}
               searchQuery={searchQuery}
+              isOffline={isOffline}
+              isUsingCachedData={isUsingCachedData}
             />
           </div>
 
@@ -442,7 +379,6 @@ function MainApp() {
                   setZoomTarget({ lat: dest.lat, lng: dest.lng, zoom: 15.5, timestamp: Date.now() });
                 }
               }}
-              onLocateNearMe={handleCenterTarget}
               isLocating={isLocating}
               filters={filters}
               onFiltersChange={setFilters}
@@ -453,11 +389,6 @@ function MainApp() {
               onOpenSettings={() => setIsSettingsOpen(true)}
               parkingDurationHours={parkingDurationHours}
               onChangeDurationHours={setParkingDurationHours}
-              isMapMoved={isMapMoved}
-              onSearchThisArea={handleSearchThisArea}
-              visibleAreaCount={visibleAreaLotsCount}
-              outOfZoneMatchesCount={outOfZoneMatchesCount}
-              onFlyToFirstMatch={handleFlyToFirstSearchMatch}
             />
 
             <ParkingMap
@@ -557,7 +488,6 @@ function MainApp() {
                 setZoomTarget({ lat: dest.lat, lng: dest.lng, zoom: 15.5, timestamp: Date.now() });
               }
             }}
-            onLocateNearMe={handleCenterTarget}
             isLocating={isLocating}
             filters={filters}
             onFiltersChange={setFilters}
@@ -568,11 +498,6 @@ function MainApp() {
             onOpenSettings={() => setIsSettingsOpen(true)}
             parkingDurationHours={parkingDurationHours}
             onChangeDurationHours={setParkingDurationHours}
-            isMapMoved={isMapMoved && viewMode === 'map'}
-            onSearchThisArea={handleSearchThisArea}
-            visibleAreaCount={visibleAreaLotsCount}
-            outOfZoneMatchesCount={outOfZoneMatchesCount}
-            onFlyToFirstMatch={handleFlyToFirstSearchMatch}
           />
 
           {/* Horizontal Swipeable Carousel (In Map View only) */}
@@ -589,7 +514,6 @@ function MainApp() {
                   selectedLot={selectedLotForDetail}
                   onSelectLot={setSelectedLotForDetail}
                   onOpenDetail={setSelectedLotForDetail}
-                  onExplainScore={setLotForScoreExplain}
                   isFavourite={isFavourite}
                   onToggleFavourite={toggleFavourite}
                   parkingDurationHours={parkingDurationHours}
@@ -609,6 +533,8 @@ function MainApp() {
             onSortChange={setSortOption}
             viewMode={viewMode}
             onToggleViewMode={setViewMode}
+            isOffline={isOffline}
+            isUsingCachedData={isUsingCachedData}
           />
         </div>
       )}

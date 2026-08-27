@@ -94,7 +94,6 @@ export interface ScoredParkingLot {
 }
 
 export interface FilterState {
-  searchQuery: string;
   vehicleType: VehicleType;
   district: string; // 'ALL' or specific district code
   region: string; // 'ALL' | 'HK_ISLAND' | 'KOWLOON' | 'NEW_TERRITORIES'

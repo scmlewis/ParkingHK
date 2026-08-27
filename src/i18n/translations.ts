@@ -106,7 +106,8 @@ export const translations = {
       remarks: 'Notes & Offers',
       addedToFav: 'Saved to favourites',
       removedFromFav: 'Removed from favourites',
-      updated: 'Updated'
+      updated: 'Updated',
+      paymentLabel: 'Payment'
     },
     favourites: {
       title: 'Saved Carparks',
@@ -128,7 +129,11 @@ export const translations = {
       privacyDesc: 'Your GPS location is processed purely on your device to calculate distance and find nearby car parks. We do not store or track your location or vehicle data.',
       scoreFormula: 'How Parking Score Works',
       scoreFormulaDesc: 'Our deterministic scoring algorithm evaluates 5 objective parameters: Vacancy availability (40%), Distance (25%), Price (20%), Opening status (10%), and Data freshness (5%). It does not accept sponsored placement.',
-      version: 'ParkingHK PWA v1.2'
+      version: 'ParkingHK PWA v1.2',
+      github: 'Source Code',
+      githubDesc: 'Open-source project built with React, TypeScript & Leaflet.',
+      author: 'Author',
+      authorDesc: 'Built by Lewis for Hong Kong drivers.'
     },
     refresh: {
       refreshNow: 'Refresh',
@@ -256,7 +261,8 @@ export const translations = {
       remarks: '備註與泊車優惠',
       addedToFav: '已加入收藏',
       removedFromFav: '已取消收藏',
-      updated: '更新於'
+      updated: '更新於',
+      paymentLabel: '付款方式'
     },
     favourites: {
       title: '已收藏停車場',
@@ -278,7 +284,11 @@ export const translations = {
       privacyDesc: '您的 GPS 位置資訊僅於閣下的瀏覽器端即時計算距離與篩選周邊車位，本系統絕不會收集或儲存您的地理軌跡或車輛資料。',
       scoreFormula: '推薦指數評分機制',
       scoreFormulaDesc: '推薦指數由 5 項客觀指標決定：車位空缺充裕度 (40%)、距離步行時間 (25%)、收費合理性 (20%)、營業狀態 (10%) 與數據即時性 (5%)。絕無任何商業贊助干預。',
-      version: 'ParkingHK PWA v1.2'
+      version: 'ParkingHK PWA v1.2',
+      github: '原始碼',
+      githubDesc: '開源專案，採用 React、TypeScript 及 Leaflet 開發。',
+      author: '作者',
+      authorDesc: '由 Lewis 為香港駕駛者開發。'
     },
     refresh: {
       refreshNow: '刷新',

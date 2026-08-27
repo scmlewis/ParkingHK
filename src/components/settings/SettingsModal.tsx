@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useI18n } from '../../i18n/context';
-import { X, Shield, Database, Award, Globe, Check } from 'lucide-react';
+import { X, Shield, Database, Award, Globe, Check, Github, User } from 'lucide-react';
 import { AppLogo } from '../common/AppLogo';
 
 interface SettingsModalProps {
@@ -125,6 +125,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   {t.settings.privacyDesc}
+                </p>
+              </div>
+
+              {/* 5. GitHub Source Code */}
+              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700">
+                <div className="flex items-center gap-2 font-bold text-white text-xs mb-1.5">
+                  <Github className="w-4 h-4 text-sky-400" />
+                  <span>{t.settings.github}</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed mb-2">
+                  {t.settings.githubDesc}
+                </p>
+                <a
+                  href="https://github.com/scmlewis/ParkingHK"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-sky-400 text-xs font-bold border border-slate-700 transition"
+                >
+                  <Github className="w-3.5 h-3.5" />
+                  <span>github.com/scmlewis/ParkingHK</span>
+                </a>
+              </div>
+
+              {/* 6. Author */}
+              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700">
+                <div className="flex items-center gap-2 font-bold text-white text-xs mb-1.5">
+                  <User className="w-4 h-4 text-sky-400" />
+                  <span>{t.settings.author}</span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {t.settings.authorDesc}
                 </p>
               </div>
 
