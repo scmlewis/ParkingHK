@@ -30,6 +30,7 @@ interface ParkingMapProps {
   zoomTarget?: { lat: number; lng: number; zoom?: number; timestamp: number } | null;
   isDesktop?: boolean;
   parkingDurationHours?: number;
+  gpsFlyCounter?: number;
 }
 
 // Distance helper
@@ -130,7 +131,8 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
   onMapMoveEnd,
   zoomTarget,
   isDesktop = false,
-  parkingDurationHours = 1
+  parkingDurationHours = 1,
+  gpsFlyCounter = 0
 }) => {
   const { lang, t } = useI18n();
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -150,6 +152,7 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
   onMapMoveEndRef.current = onMapMoveEnd;
 
   const prevTargetRef = useRef<{ lat: number; lng: number } | null>(null);
+  const prevFlyCountRef = useRef(0);
 
   const [currentZoom, setCurrentZoom] = useState(13);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -472,10 +475,11 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
       }).addTo(map);
     }
 
-    // Fly to target when it changes (first fix or re-center)
-    const prev = prevTargetRef.current;
-    const targetChanged = !prev || prev.lat !== targetLat || prev.lng !== targetLng;
-    if (targetChanged) {
+    // Fly to target on GPS re-center click or when target changes
+    const flyCountChanged = prevFlyCountRef.current !== gpsFlyCounter;
+    prevFlyCountRef.current = gpsFlyCounter;
+    const targetChanged = !prevTargetRef.current || prevTargetRef.current.lat !== targetLat || prevTargetRef.current.lng !== targetLng;
+    if (flyCountChanged || targetChanged) {
       prevTargetRef.current = { lat: targetLat, lng: targetLng };
       map.flyTo([targetLat, targetLng], Math.max(map.getZoom(), 15), {
         duration: 1,
@@ -498,7 +502,7 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
         dashArray: '4, 6'
       }).addTo(map);
     }
-  }, [targetLat, targetLng, searchRadiusKm]);
+  }, [targetLat, targetLng, searchRadiusKm, gpsFlyCounter]);
 
   // Main Render Layer: Switch between Tier 1 (18 Districts), Tier 2 (Sub-districts), Tier 3 (Car Parks)
   useEffect(() => {

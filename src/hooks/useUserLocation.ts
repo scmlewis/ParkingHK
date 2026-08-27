@@ -2,6 +2,13 @@ import { useState, useCallback } from 'react';
 import { Destination } from '../domain/types';
 import { DEFAULT_HK_CENTER } from '../constants/districts';
 
+// Hong Kong approximate bounding box
+const HK_BOUNDS = { south: 22.08, north: 22.62, west: 113.72, east: 114.52 };
+
+function isWithinHongKong(lat: number, lng: number): boolean {
+  return lat >= HK_BOUNDS.south && lat <= HK_BOUNDS.north && lng >= HK_BOUNDS.west && lng <= HK_BOUNDS.east;
+}
+
 export interface LocationState {
   latitude: number | null;
   longitude: number | null;
@@ -16,8 +23,8 @@ export interface LocationState {
 
 export function useUserLocation() {
   const [locationState, setLocationState] = useState<LocationState>({
-    latitude: DEFAULT_HK_CENTER.lat,
-    longitude: DEFAULT_HK_CENTER.lng,
+    latitude: null,
+    longitude: null,
     accuracy: null,
     isLocating: false,
     permissionStatus: 'PROMPT',
@@ -43,13 +50,25 @@ export function useUserLocation() {
 
     navigator.geolocation.getCurrentPosition(
       position => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        if (!isWithinHongKong(lat, lng)) {
+          setLocationState(prev => ({
+            ...prev,
+            isLocating: false,
+            error: 'Your location appears to be outside Hong Kong. The app is optimised for Hong Kong car parks only.'
+          }));
+          return;
+        }
+
         setLocationState({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude: lat,
+          longitude: lng,
           accuracy: position.coords.accuracy,
           isLocating: false,
           permissionStatus: 'GRANTED',
-          locationName: null, // "Near Me"
+          locationName: null,
           isCustomDestination: false,
           selectedDestination: null,
           error: null
@@ -75,7 +94,7 @@ export function useUserLocation() {
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 60000
+        maximumAge: 0
       }
     );
   }, []);

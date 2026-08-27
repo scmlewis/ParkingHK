@@ -90,6 +90,7 @@ function MainApp() {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [isFavouritesModalOpen, setIsFavouritesModalOpen] = useState<boolean>(false);
   const [parkingDurationHours, setParkingDurationHours] = useState<number>(2);
+  const [gpsFlyCounter, setGpsFlyCounter] = useState<number>(0);
 
   // Modal States
   const [selectedLotForDetail, setSelectedLotForDetail] = useState<ScoredParkingLot | null>(null);
@@ -300,6 +301,7 @@ function MainApp() {
   const handleCenterTarget = () => {
     setCustomSearchLocation(null);
     setIsMapMoved(false);
+    setGpsFlyCounter(prev => prev + 1);
     requestCurrentLocation();
   };
 
@@ -408,6 +410,7 @@ function MainApp() {
               showInlineCard={false}
               isDesktop={true}
               parkingDurationHours={parkingDurationHours}
+              gpsFlyCounter={gpsFlyCounter}
             />
           </div>
         </div>
@@ -437,6 +440,7 @@ function MainApp() {
               showInlineCard={false}
               isDesktop={false}
               parkingDurationHours={parkingDurationHours}
+              gpsFlyCounter={gpsFlyCounter}
             />
           </div>
 
