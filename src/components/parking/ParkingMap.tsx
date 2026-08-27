@@ -149,6 +149,8 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
   const onMapMoveEndRef = useRef(onMapMoveEnd);
   onMapMoveEndRef.current = onMapMoveEnd;
 
+  const prevTargetRef = useRef<{ lat: number; lng: number } | null>(null);
+
   const [currentZoom, setCurrentZoom] = useState(13);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -468,8 +470,13 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
         icon: userIcon,
         zIndexOffset: 1000
       }).addTo(map);
+    }
 
-      // Fly to the first GPS fix
+    // Fly to target when it changes (first fix or re-center)
+    const prev = prevTargetRef.current;
+    const targetChanged = !prev || prev.lat !== targetLat || prev.lng !== targetLng;
+    if (targetChanged) {
+      prevTargetRef.current = { lat: targetLat, lng: targetLng };
       map.flyTo([targetLat, targetLng], Math.max(map.getZoom(), 15), {
         duration: 1,
         easeLinearity: 0.25

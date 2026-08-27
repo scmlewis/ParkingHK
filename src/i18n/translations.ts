@@ -314,3 +314,35 @@ export const translations = {
 };
 
 export type Translations = typeof translations.en;
+
+// Payment method display name mapping (raw API strings -> display)
+const PAYMENT_METHOD_LABELS: Record<string, { en: string; tc: string }> = {
+  'octopus': { en: 'Octopus', tc: '八達通' },
+  'visa': { en: 'Visa', tc: 'Visa' },
+  'mastercard': { en: 'Mastercard', tc: 'Mastercard' },
+  'american express': { en: 'Amex', tc: 'Amex' },
+  'amex': { en: 'Amex', tc: 'Amex' },
+  'union pay': { en: 'UnionPay', tc: '銀聯' },
+  'unionpay': { en: 'UnionPay', tc: '銀聯' },
+  'alipay': { en: 'AlipayHK', tc: 'AlipayHK' },
+  'alipayhk': { en: 'AlipayHK', tc: 'AlipayHK' },
+  'wechat pay': { en: 'WeChat Pay', tc: '微信支付' },
+  'wechatpay': { en: 'WeChat Pay', tc: '微信支付' },
+  'apple pay': { en: 'Apple Pay', tc: 'Apple Pay' },
+  'google pay': { en: 'Google Pay', tc: 'Google Pay' },
+  'fps': { en: 'FPS', tc: '轉數快' },
+  'faster payment system': { en: 'FPS', tc: '轉數快' },
+  'cash': { en: 'Cash', tc: '現金' },
+  'credit card': { en: 'Credit Card', tc: '信用卡' },
+  'debit card': { en: 'Debit Card', tc: '扣賬卡' },
+  'the point app': { en: 'The Point', tc: 'The Point' },
+  'the point': { en: 'The Point', tc: 'The Point' }
+};
+
+export function translatePaymentMethod(method: string, lang: 'en' | 'tc'): string {
+  const key = method.toLowerCase().trim();
+  const mapped = PAYMENT_METHOD_LABELS[key];
+  if (mapped) return mapped[lang];
+  // Fallback: return original string
+  return method;
+}

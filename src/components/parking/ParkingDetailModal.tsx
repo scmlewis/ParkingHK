@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScoredParkingLot } from '../../domain/types';
 import { useI18n } from '../../i18n/context';
+import { translatePaymentMethod } from '../../i18n/translations';
 import { ScoreBadge } from '../common/ScoreBadge';
 import { FreshnessBadge } from '../common/FreshnessBadge';
 import { formatDistance, formatWalkingTime } from '../../services/distanceService';
@@ -511,7 +512,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                       key={i}
                       className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800/90 text-slate-300 font-medium border border-slate-700/60"
                     >
-                      {m}
+                      {translatePaymentMethod(m, lang)}
                     </span>
                   ))}
                 </div>
