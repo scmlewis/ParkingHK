@@ -112,7 +112,7 @@ export const DesktopSidePanel: React.FC<DesktopSidePanelProps> = ({
   return (
     <div className="w-full h-full flex flex-col bg-slate-950 border-r border-slate-800 text-slate-100 overflow-hidden">
       {/* 1. Clean Non-Duplicated Header: Title + Count + Sort */}
-      <div className="p-3.5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-2 shrink-0">
+      <div className="p-3.5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-2 shrink-0 relative z-30">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
           <h2 className="font-extrabold text-sm sm:text-base text-white">

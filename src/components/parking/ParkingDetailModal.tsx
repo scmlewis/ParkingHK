@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScoredParkingLot } from '../../domain/types';
 import { useI18n } from '../../i18n/context';
@@ -109,6 +109,8 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
 }) => {
   const { lang, t } = useI18n();
   const [showAllNavApps, setShowAllNavApps] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startY: number } | null>(null);
 
   if (!scoredLot) return null;
 
@@ -140,6 +142,21 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
     }
   };
 
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    dragRef.current = { startX: e.clientX, startY: e.clientY };
+  }, []);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const deltaY = e.clientY - dragRef.current.startY;
+    const scrollEl = scrollRef.current;
+    const atTop = scrollEl ? scrollEl.scrollTop <= 0 : true;
+    if (atTop && deltaY > 80) {
+      onClose();
+    }
+    dragRef.current = null;
+  }, [onClose]);
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -159,15 +176,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
           initial="hidden"
           animate="visible"
           exit="exit"
-          drag="y"
-          dragConstraints={{ top: 0 }}
-          dragElastic={{ top: 0, bottom: 0.5 }}
-          onDragEnd={(_, info) => {
-            if (info.offset.y > 110 || info.velocity.y > 400) {
-              onClose();
-            }
-          }}
-          className="bg-slate-900 w-full max-w-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-800/90 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] touch-pan-y"
+          className="bg-slate-900 w-full max-w-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-800/90 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]"
         >
           {/* Mobile Drag Indicator Bar */}
           <div className="w-12 h-1 bg-slate-700/60 rounded-full mx-auto mt-2.5 sm:hidden shrink-0 cursor-grab active:cursor-grabbing" />
@@ -229,10 +238,13 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
 
           {/* Modal Scrollable Body */}
           <motion.div
+            ref={scrollRef}
             variants={contentContainerVariants}
             initial="hidden"
             animate="visible"
-            className="p-5 space-y-5 overflow-y-auto flex-1 text-sm custom-modal-scrollbar"
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            className="p-5 space-y-5 overflow-y-auto flex-1 text-sm custom-modal-scrollbar overscroll-none touch-pan-x"
           >
             {/* 1. Driver-Centric Hero Status & Action Card */}
             <motion.div
