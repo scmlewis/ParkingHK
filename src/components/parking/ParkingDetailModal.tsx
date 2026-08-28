@@ -319,10 +319,10 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                   </span>
                   <div className="flex items-baseline justify-end gap-0.5">
                     <span className="text-xl sm:text-2xl font-black text-white">
-                      {lot.pricing?.hourlyRate ? `HK$${lot.pricing.hourlyRate}` : (lang === 'tc' ? '現場公布' : 'On-site')}
+                      {lot.pricing?.hourlyRate && !lot.pricing?.estimated ? `HK$${lot.pricing.hourlyRate}` : (lang === 'tc' ? '現場公布' : 'On-site')}
                     </span>
-                    {lot.pricing?.hourlyRate && (
-                      <span className="text-xs text-slate-400 font-semibold">/hr{lot.pricing.estimated ? ' (Est.)' : ''}</span>
+                    {lot.pricing?.hourlyRate && !lot.pricing?.estimated && (
+                      <span className="text-xs text-slate-400 font-semibold">/hr</span>
                     )}
                   </div>
                 </div>
@@ -449,8 +449,8 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                 <span>{t.detail.pricingTitle}</span>
               </div>
 
-              {/* Duration-based Estimated Price Banner */}
-              {lot.pricing?.hourlyRate && (
+              {/* Duration-based Cost Banner — only for official prices */}
+              {lot.pricing?.hourlyRate && !lot.pricing?.estimated && (
                 <div className="mb-2.5 p-3 rounded-xl bg-sky-950/40 border border-sky-600/30 flex items-center justify-between shadow-xs">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
@@ -476,7 +476,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                     {lang === 'tc' ? '基礎時租' : 'Hourly Rate'}
                   </span>
                   <span className="text-sm sm:text-base font-bold text-white">
-                    {lot.pricing?.hourlyRate ? `HK$${lot.pricing.hourlyRate}` : (lang === 'tc' ? '現場公布' : 'On-site')}
+                    {lot.pricing?.hourlyRate && !lot.pricing?.estimated ? `HK$${lot.pricing.hourlyRate}` : (lang === 'tc' ? '現場公布' : 'On-site')}
                   </span>
                 </div>
 

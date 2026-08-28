@@ -284,7 +284,8 @@ export const ModernCarousel: React.FC<ModernCarouselProps> = ({
             const fav = isFavourite(lot.id);
             const hourlyRate = lot.pricing?.hourlyRate;
             const isEstimated = lot.pricing?.estimated === true;
-            const totalCost = hourlyRate != null ? hourlyRate * parkingDurationHours : null;
+            const displayRate = hourlyRate != null && !isEstimated ? hourlyRate : null;
+            const totalCost = displayRate != null ? displayRate * parkingDurationHours : null;
             const formattedDist = formatDistance(distanceMeters, lang);
             const formattedWalking = formatWalkingTime(walkingMinutes, lang, distanceMeters);
 
@@ -323,13 +324,13 @@ export const ModernCarousel: React.FC<ModernCarouselProps> = ({
 
                   {/* Total Rate Display */}
                   <div className="text-right shrink-0">
-                    {hourlyRate != null ? (
+                    {displayRate != null ? (
                       <div className="flex items-baseline gap-1">
                         <span className="text-sm font-black text-sky-400">
                           ${totalCost}
                         </span>
                         <span className="text-[10px] text-slate-400 font-medium">
-                          (${hourlyRate}/h{isEstimated ? ' Est.' : ''})
+                          (${displayRate}/h)
                         </span>
                       </div>
                     ) : (
