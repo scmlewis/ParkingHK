@@ -388,7 +388,7 @@ function MainApp() {
                 setIsMapMoved(false);
                 if (dest) {
                   setSelectedLotForDetail(null);
-                  setZoomTarget({ lat: dest.lat, lng: dest.lng, zoom: 15.5, timestamp: Date.now() });
+                  setZoomTarget({ lat: dest.latitude, lng: dest.longitude, zoom: 15.5, timestamp: Date.now() });
                 }
               }}
               isLocating={isLocating}
@@ -502,7 +502,7 @@ function MainApp() {
               setIsMapMoved(false);
               if (dest) {
                 setSelectedLotForDetail(null);
-                setZoomTarget({ lat: dest.lat, lng: dest.lng, zoom: 15.5, timestamp: Date.now() });
+                setZoomTarget({ lat: dest.latitude, lng: dest.longitude, zoom: 15.5, timestamp: Date.now() });
               }
             }}
             isLocating={isLocating}
