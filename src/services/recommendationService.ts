@@ -82,10 +82,15 @@ export function calculateParkingScore(
 
   // 4. Price score (out of 20)
   // Standard HK hourly rates: <$20 (very cheap), $20-$30 (standard), $31-$45 (premium), >$45 (expensive)
-  // Unknown price gets a low score — must not outperform known-expensive lots
-  let priceScore = 5;
+  // Estimated (region-based) prices don't differentiate — give neutral score
+  // Unknown (no pricing data) gets a low score — must not outperform known-expensive lots
+  // Only official gov-published prices should influence ranking
   const hourlyRate = lot.pricing?.hourlyRate;
-  if (hourlyRate != null) {
+  const isEstimated = lot.pricing?.estimated === true;
+  let priceScore = 5; // default for unknown (no pricing data)
+  if (isEstimated) {
+    priceScore = 10; // neutral — region estimates don't differentiate lots
+  } else if (hourlyRate != null) {
     if (hourlyRate <= 18) {
       priceScore = 20;
     } else if (hourlyRate <= 25) {
@@ -163,7 +168,10 @@ export function calculateParkingScore(
 
   // Price reason
   if (hourlyRate !== undefined && hourlyRate !== null) {
-    if (hourlyRate <= 22) {
+    if (isEstimated) {
+      reasonsEn.push(`Estimated rate: HK$${hourlyRate}/hr (region-based)`);
+      reasonsTc.push(`估算時租：HK$${hourlyRate} / 小時（按區域估算）`);
+    } else if (hourlyRate <= 22) {
       reasonsEn.push(`Competitive rate: HK$${hourlyRate}/hr`);
       reasonsTc.push(`收費相宜：HK$${hourlyRate} / 小時`);
     } else {
