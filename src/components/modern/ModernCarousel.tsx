@@ -322,7 +322,7 @@ export const ModernCarousel: React.FC<ModernCarouselProps> = ({
 
                   {/* Total Rate Display */}
                   <div className="text-right shrink-0">
-                    {hourlyRate !== undefined ? (
+                    {hourlyRate != null ? (
                       <div className="flex items-baseline gap-1">
                         <span className="text-sm font-black text-sky-400">
                           ${totalCost}

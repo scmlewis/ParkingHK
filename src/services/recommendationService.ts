@@ -35,12 +35,12 @@ export function calculateParkingScore(
 
   // 2. Availability score (out of 40)
   // Closed lots get 0 — vacancies are irrelevant when the lot is not operating
+  // Unknown vacancy gets a low score — must not outperform known-full lots
   let availabilityScore = 0;
   if (lot.openingStatus === 'CLOSED') {
     availabilityScore = 0;
   } else if (vacancyCount === null) {
-    // Unknown vacancy: baseline moderate score (15/40)
-    availabilityScore = 15;
+    availabilityScore = 5;
   } else if (vacancyCount === 0) {
     availabilityScore = 0;
   } else if (vacancyCount < 5) {
@@ -50,7 +50,6 @@ export function calculateParkingScore(
   } else if (vacancyCount < 30) {
     availabilityScore = 34;
   } else {
-    // Plenty of spaces
     availabilityScore = 40;
   }
 
@@ -63,7 +62,8 @@ export function calculateParkingScore(
   );
   const walkingMinutes = estimateWalkingMinutes(distanceMeters);
 
-  let distanceScore = 15; // default if no distance available
+  // Unknown distance gets a low score — must not outperform known-far lots
+  let distanceScore = 5;
   if (distanceMeters !== null) {
     if (distanceMeters <= 250) {
       distanceScore = 25;
@@ -82,9 +82,10 @@ export function calculateParkingScore(
 
   // 4. Price score (out of 20)
   // Standard HK hourly rates: <$20 (very cheap), $20-$30 (standard), $31-$45 (premium), >$45 (expensive)
-  let priceScore = 12; // default if unknown
+  // Unknown price gets a low score — must not outperform known-expensive lots
+  let priceScore = 5;
   const hourlyRate = lot.pricing?.hourlyRate;
-  if (hourlyRate !== undefined && hourlyRate !== null) {
+  if (hourlyRate != null) {
     if (hourlyRate <= 18) {
       priceScore = 20;
     } else if (hourlyRate <= 25) {
@@ -101,13 +102,11 @@ export function calculateParkingScore(
   }
 
   // 5. Opening status score (out of 10)
-  let openingScore = 5;
+  let openingScore = 2;
   if (lot.openingStatus === 'OPEN') {
     openingScore = 10;
   } else if (lot.openingStatus === 'CLOSED') {
     openingScore = 0;
-  } else {
-    openingScore = 5;
   }
 
   // 6. Freshness score (out of 5)

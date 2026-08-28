@@ -50,14 +50,14 @@ function createCarparkMarkerSvg(
   lotId: string,
   status: 'AVAILABLE' | 'LIMITED' | 'FULL' | 'UNKNOWN',
   count: number | null,
-  hourlyRate: number | undefined,
+  hourlyRate: number | null | undefined,
   hasEV: boolean | undefined,
   isSelected: boolean,
   durationHours: number = 1,
   isClosed: boolean = false
 ): string {
   let priceText = 'P';
-  if (hourlyRate !== undefined) {
+  if (hourlyRate != null) {
     const totalCost = hourlyRate * durationHours;
     priceText = `$${totalCost} · ${durationHours}h`;
   }
@@ -854,7 +854,7 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
                   {lang === 'tc' ? '時租' : 'Rate'}
                 </span>
                 <span className="font-extrabold text-sky-300">
-                  {selectedLot.lot.pricing?.hourlyRate !== undefined
+                  {selectedLot.lot.pricing?.hourlyRate != null
                     ? `HK$${selectedLot.lot.pricing.hourlyRate}/時`
                     : (lang === 'tc' ? '現場公布' : 'On-site')}
                 </span>

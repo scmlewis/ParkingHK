@@ -34,7 +34,8 @@ export interface PricingPeriod {
 }
 
 export interface ParkingPricing {
-  hourlyRate?: number; // Representative base hourly rate for comparison
+  hourlyRate?: number | null; // Representative base hourly rate for comparison; null = unavailable
+  estimated?: boolean; // true when hourlyRate is derived from region averages, not official data
   dayRate?: number;
   nightRate?: number;
   periods?: PricingPeriod[];

@@ -10,7 +10,7 @@ interface ModernBottomBarProps {
   viewMode: 'map' | 'list';
   onToggleViewMode: (mode: 'map' | 'list') => void;
   isOffline?: boolean;
-  isUsingCachedData?: boolean;
+  dataSource?: 'live' | 'cached' | 'seed';
 }
 
 export const ModernBottomBar: React.FC<ModernBottomBarProps> = ({
@@ -20,7 +20,7 @@ export const ModernBottomBar: React.FC<ModernBottomBarProps> = ({
   viewMode,
   onToggleViewMode,
   isOffline = false,
-  isUsingCachedData = false
+  dataSource = 'live'
 }) => {
   const { lang, t } = useI18n();
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -51,7 +51,7 @@ export const ModernBottomBar: React.FC<ModernBottomBarProps> = ({
         {/* 1. Carpark Count Badge */}
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/70 text-slate-100 text-[11px] sm:text-xs font-bold shrink-0 whitespace-nowrap">
           <span className={`w-2 h-2 rounded-full shrink-0 ${
-            isOffline ? 'bg-rose-400' : isUsingCachedData ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'
+            isOffline ? 'bg-rose-400' : dataSource === 'live' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
           }`} />
           <span>
             {totalCount} {lang === 'tc' ? '個停車場' : 'Lots'}

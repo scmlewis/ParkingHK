@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { ParkingLot, Vacancy, VehicleType } from '../../src/domain/types';
+import type { GovCarparkInfoItem, GovCarparkResponse, GovVacancyItem, GovVacancyResponse } from '../govTypes';
 
 // In-memory cache (per serverless function instance)
 const cache: {
@@ -93,14 +94,14 @@ export async function getCarParksBasic(): Promise<ParkingLot[]> {
     ]);
     clearTimeout(timeoutId);
     if (zhRes.ok) {
-      const zhData = (await zhRes.json()) as any;
-      const enData = enRes.ok ? ((await enRes.json()) as any) : { results: [] };
+      const zhData = (await zhRes.json()) as GovCarparkResponse;
+      const enData = enRes.ok ? ((await enRes.json()) as GovCarparkResponse) : { results: [] };
       const zhList = zhData?.results || [];
       const enList = enData?.results || [];
-      const enMap = new Map<string, any>();
-      enList.forEach((item: any) => { if (item.park_Id) enMap.set(item.park_Id, item); });
+      const enMap = new Map<string, GovCarparkInfoItem>();
+      enList.forEach((item) => { if (item.park_Id) enMap.set(item.park_Id, item); });
       if (Array.isArray(zhList) && zhList.length > 0) {
-        const parsed: ParkingLot[] = zhList.map((zhItem: any, index: number) => {
+        const parsed: ParkingLot[] = zhList.map((zhItem, index) => {
           const parkId = zhItem.park_Id || zhItem.parkId || `td_${index}`;
           const enItem = enMap.get(parkId) || {};
           const nameZh = zhItem.name || '';
@@ -111,9 +112,8 @@ export async function getCarParksBasic(): Promise<ParkingLot[]> {
           const lng = typeof zhItem.longitude === 'number' ? zhItem.longitude : parseFloat(zhItem.longitude);
           const districtMatch = resolveDistrict(rawDistrictZh, rawDistrictEn, nameZh, nameEn, lat, lng);
           const pcCharges = zhItem.privateCar?.hourlyCharges || [];
-          const hourlyRate = pcCharges.length > 0 && typeof pcCharges[0].price === 'number'
-            ? pcCharges[0].price
-            : (districtMatch.region === 'HK_ISLAND' ? 32 : districtMatch.region === 'KOWLOON' ? 28 : 22);
+          const hasOfficialPricing = pcCharges.length > 0 && typeof pcCharges[0].price === 'number';
+          const hourlyRate = hasOfficialPricing ? pcCharges[0].price : null;
           const heightLimits = zhItem.heightLimits || [];
           const height = heightLimits.length > 0 && typeof heightLimits[0].height === 'number' ? heightLimits[0].height : undefined;
           const vehicleTypes: VehicleType[] = ['PRIVATE_CAR'];
@@ -143,7 +143,7 @@ export async function getCarParksBasic(): Promise<ParkingLot[]> {
             website: zhItem.website || undefined,
             heightLimit: height,
             vehicleTypes,
-            pricing: { hourlyRate, dayRate: hourlyRate * 7, paymentMethods },
+            pricing: { hourlyRate, estimated: !hasOfficialPricing, dayRate: hourlyRate != null ? hourlyRate * 7 : undefined, paymentMethods },
             facilities: { evCharging: hasEv, disabledParking: hasDis, contactlessPayment: true, covered: true },
             vacancies: [],
             dataUpdatedAt: new Date().toISOString()

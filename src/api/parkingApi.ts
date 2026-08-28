@@ -4,7 +4,9 @@ import { HK_CARPARK_SEED_DATA } from '../server/mockData';
 const CACHE_KEY_PARKING_LOTS = 'parkinghk_cached_lots_v1';
 const CACHE_KEY_LAST_FETCH = 'parkinghk_last_fetch_ts';
 
-export async function fetchAllParkingLots(): Promise<{ lots: ParkingLot[]; isCached: boolean; timestamp: string }> {
+export type DataSource = 'live' | 'cached' | 'seed';
+
+export async function fetchAllParkingLots(): Promise<{ lots: ParkingLot[]; dataSource: DataSource; timestamp: string }> {
   try {
     const res = await fetch('/api/parking/all', {
       headers: { 'Accept': 'application/json' }
@@ -25,7 +27,7 @@ export async function fetchAllParkingLots(): Promise<{ lots: ParkingLot[]; isCac
       }
       return {
         lots: json.data,
-        isCached: false,
+        dataSource: 'live',
         timestamp: json.timestamp || new Date().toISOString()
       };
     }
@@ -42,7 +44,7 @@ export async function fetchAllParkingLots(): Promise<{ lots: ParkingLot[]; isCac
         if (Array.isArray(parsed) && parsed.length > 0) {
           return {
             lots: parsed,
-            isCached: true,
+            dataSource: 'cached',
             timestamp: ts || new Date().toISOString()
           };
         }
@@ -53,7 +55,7 @@ export async function fetchAllParkingLots(): Promise<{ lots: ParkingLot[]; isCac
 
     return {
       lots: HK_CARPARK_SEED_DATA,
-      isCached: true,
+      dataSource: 'seed',
       timestamp: new Date().toISOString()
     };
   }

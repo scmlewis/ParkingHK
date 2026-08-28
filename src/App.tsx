@@ -52,7 +52,7 @@ function MainApp() {
     isRefreshing,
     error,
     isOffline,
-    isUsingCachedData,
+    dataSource,
     secondsUntilNextRefresh,
     refreshNow,
     retryInitialLoad
@@ -210,7 +210,7 @@ function MainApp() {
     if (isFinite(filters.maxHourlyRate) && filters.maxHourlyRate > 0) {
       result = result.filter(item => {
         const rate = item.lot.pricing?.hourlyRate;
-        if (rate === undefined) return true;
+        if (rate == null) return true; // include lots with unknown price
         return rate <= filters.maxHourlyRate;
       });
     }
@@ -321,11 +321,23 @@ function MainApp() {
 
   return (
     <div className="h-[100dvh] w-screen relative overflow-hidden bg-slate-950 text-slate-100 flex flex-col select-none">
-      {/* ── Offline Banner ── */}
-      {(isOffline || isUsingCachedData) && (
+      {/* ── Offline / Data Source Banner ── */}
+      {isOffline && (
         <div className="relative z-40 bg-amber-500 text-slate-950 text-xs font-semibold px-4 py-1.5 flex items-center justify-center gap-2 shadow-md shrink-0">
           <WifiOff className="w-4 h-4 shrink-0" />
           <span>{t.offline.banner}</span>
+        </div>
+      )}
+      {!isOffline && dataSource === 'seed' && (
+        <div className="relative z-40 bg-amber-500 text-slate-950 text-xs font-semibold px-4 py-1.5 flex items-center justify-center gap-2 shadow-md shrink-0">
+          <WifiOff className="w-4 h-4 shrink-0" />
+          <span>{lang === 'tc' ? '即時數據暫不可用，顯示有限備用資料' : 'Live data unavailable — showing limited fallback data'}</span>
+        </div>
+      )}
+      {!isOffline && dataSource === 'cached' && (
+        <div className="relative z-40 bg-amber-500/80 text-slate-950 text-xs font-semibold px-4 py-1.5 flex items-center justify-center gap-2 shadow-md shrink-0">
+          <WifiOff className="w-4 h-4 shrink-0" />
+          <span>{lang === 'tc' ? '顯示之前快取的資料' : 'Showing previously cached information'}</span>
         </div>
       )}
 
@@ -371,7 +383,7 @@ function MainApp() {
               currentZoom={currentMapZoom}
               searchQuery={searchQuery}
               isOffline={isOffline}
-              isUsingCachedData={isUsingCachedData}
+              dataSource={dataSource}
             />
           </div>
 
@@ -554,7 +566,7 @@ function MainApp() {
             viewMode={viewMode}
             onToggleViewMode={setViewMode}
             isOffline={isOffline}
-            isUsingCachedData={isUsingCachedData}
+            dataSource={dataSource}
           />
         </div>
       )}

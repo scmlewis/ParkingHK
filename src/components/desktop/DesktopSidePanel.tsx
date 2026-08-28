@@ -30,7 +30,7 @@ interface DesktopSidePanelProps {
   currentZoom?: number;
   searchQuery?: string;
   isOffline?: boolean;
-  isUsingCachedData?: boolean;
+  dataSource?: 'live' | 'cached' | 'seed';
 }
 
 const ITEMS_PER_PAGE = 30;
@@ -53,7 +53,7 @@ export const DesktopSidePanel: React.FC<DesktopSidePanelProps> = ({
   currentZoom = 14,
   searchQuery = '',
   isOffline = false,
-  isUsingCachedData = false
+  dataSource = 'live'
 }) => {
   const { lang, t } = useI18n();
   const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
@@ -119,7 +119,7 @@ export const DesktopSidePanel: React.FC<DesktopSidePanelProps> = ({
       <div className="p-3.5 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-2 shrink-0 relative z-30">
         <div className="flex items-center gap-2">
           <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-            isOffline ? 'bg-rose-400' : isUsingCachedData ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'
+            isOffline ? 'bg-rose-400' : dataSource === 'live' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
           }`} />
           <h2 className="font-extrabold text-sm sm:text-base text-white">
             {lang === 'tc' ? '停車場列表' : 'Parking Lots'}

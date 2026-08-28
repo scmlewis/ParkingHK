@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { Vacancy, VehicleType } from '../../src/domain/types';
+import type { GovVacancyResponse, GovVacancyItem } from '../govTypes';
 
 const cache: {
   vacancies: Record<string, Vacancy[]> | null;
@@ -25,7 +26,7 @@ export async function getVacancies(): Promise<Record<string, Vacancy[]>> {
     });
     clearTimeout(timeoutId);
     if (res.ok) {
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as GovVacancyResponse;
       const results = data?.results || [];
       if (Array.isArray(results) && results.length > 0) {
         const vacanciesMap: Record<string, Vacancy[]> = {};
@@ -34,7 +35,7 @@ export async function getVacancies(): Promise<Record<string, Vacancy[]>> {
           if (!parkId) continue;
           const entries: Vacancy[] = [];
           for (const key of ['privateCar', 'motorCycle', 'LGV', 'HGV', 'coach'] as const) {
-            const v = item[key];
+            const v = item[key as keyof GovVacancyItem];
             if (Array.isArray(v) && v.length > 0) {
               const entry = v[0];
               const count = typeof entry.vacancy === 'number' && entry.vacancy >= 0 ? entry.vacancy : null;

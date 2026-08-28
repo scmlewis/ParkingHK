@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ParkingLot } from '../domain/types';
-import { fetchAllParkingLots, fetchVacanciesOnly } from '../api/parkingApi';
+import { fetchAllParkingLots, fetchVacanciesOnly, DataSource } from '../api/parkingApi';
 
 export const REFRESH_INTERVAL_SECONDS = 60; // 60s as recommended in spec Section 11
 
@@ -11,7 +11,7 @@ export function useParkingData() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
-  const [isUsingCachedData, setIsUsingCachedData] = useState<boolean>(false);
+  const [dataSource, setDataSource] = useState<DataSource>('live');
   const [secondsUntilNextRefresh, setSecondsUntilNextRefresh] = useState<number>(REFRESH_INTERVAL_SECONDS);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -43,7 +43,7 @@ export function useParkingData() {
     try {
       const result = await fetchAllParkingLots();
       setLots(result.lots);
-      setIsUsingCachedData(result.isCached);
+      setDataSource(result.dataSource);
       setLastUpdated(new Date(result.timestamp));
       setSecondsUntilNextRefresh(REFRESH_INTERVAL_SECONDS);
     } catch (err) {
@@ -119,7 +119,7 @@ export function useParkingData() {
     error,
     lastUpdated,
     isOffline,
-    isUsingCachedData,
+    dataSource,
     secondsUntilNextRefresh,
     refreshNow: handleManualRefresh,
     retryInitialLoad: () => loadData(true)

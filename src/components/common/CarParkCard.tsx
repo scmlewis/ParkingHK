@@ -100,7 +100,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
 
         {/* Pricing */}
         <div className="text-right shrink-0">
-          {hourlyRate !== undefined ? (
+          {hourlyRate != null ? (
             <div className="flex items-baseline gap-1 justify-end">
               <span className="text-sm font-black text-sky-400">${totalCost}</span>
               <span className="text-[10px] text-slate-400 font-medium">({parkingDurationHours}h)</span>
