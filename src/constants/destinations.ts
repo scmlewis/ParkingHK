@@ -1,6 +1,7 @@
 import { Destination } from '../domain/types';
 
 export const POPULAR_DESTINATIONS: Destination[] = [
+  // ── Popular Malls & Landmarks ──
   {
     id: 'tst-harbour-city',
     name: { en: 'Harbour City, Tsim Sha Tsui', tc: '海港城 (尖沙咀)' },
@@ -128,5 +129,110 @@ export const POPULAR_DESTINATIONS: Destination[] = [
     latitude: 22.3153,
     longitude: 113.9365,
     popular: true
+  },
+  // ── Additional Popular Destinations ──
+  {
+    id: 'cwb-sogo',
+    name: { en: 'SOGO, Causeway Bay', tc: '崇光百貨 (銅鑼灣)' },
+    district: { en: 'Wan Chai', tc: '灣仔區' },
+    latitude: 22.2760,
+    longitude: 114.1848,
+    popular: true
+  },
+  {
+    id: 'mk-temple-street',
+    name: { en: 'Temple Street, Mong Kok', tc: '廟街 (旺角)' },
+    district: { en: 'Yau Tsim Mong', tc: '油尖旺區' },
+    latitude: 22.3045,
+    longitude: 114.1689,
+    popular: false
+  },
+  {
+    id: 'tst-star-ferry',
+    name: { en: 'Star Ferry Pier, Tsim Sha Tsui', tc: '天星碼頭 (尖沙咀)' },
+    district: { en: 'Yau Tsim Mong', tc: '油尖旺區' },
+    latitude: 22.2935,
+    longitude: 114.1688,
+    popular: false
+  },
+  {
+    id: 'central-lan-kwai-fong',
+    name: { en: 'Lan Kwai Fong, Central', tc: '蘭桂坊 (中環)' },
+    district: { en: 'Central & Western', tc: '中西區' },
+    latitude: 22.2812,
+    longitude: 114.1516,
+    popular: false
+  },
+  {
+    id: 'cwb-causeway-bay',
+    name: { en: 'Causeway Bay', tc: '銅鑼灣' },
+    district: { en: 'Wan Chai', tc: '灣仔區' },
+    latitude: 22.2790,
+    longitude: 114.1820,
+    popular: true
+  },
+  {
+    id: 'tst-tsim-sha-tsui',
+    name: { en: 'Tsim Sha Tsui', tc: '尖沙咀' },
+    district: { en: 'Yau Tsim Mong', tc: '油尖旺區' },
+    latitude: 22.2988,
+    longitude: 114.1722,
+    popular: true
+  },
+  {
+    id: 'mk-mong-kok',
+    name: { en: 'Mong Kok', tc: '旺角' },
+    district: { en: 'Yau Tsim Mong', tc: '油尖旺區' },
+    latitude: 22.3193,
+    longitude: 114.1695,
+    popular: true
+  },
+  {
+    id: 'central-central',
+    name: { en: 'Central', tc: '中環' },
+    district: { en: 'Central & Western', tc: '中西區' },
+    latitude: 22.2819,
+    longitude: 114.1583,
+    popular: true
+  },
+  {
+    id: 'admiralty-admiralty',
+    name: { en: 'Admiralty', tc: '金鐘' },
+    district: { en: 'Central & Western', tc: '中西區' },
+    latitude: 22.2730,
+    longitude: 114.1644,
+    popular: true
+  },
+  {
+    id: 'wanchai-wan-chai',
+    name: { en: 'Wan Chai', tc: '灣仔' },
+    district: { en: 'Wan Chai', tc: '灣仔區' },
+    latitude: 22.2783,
+    longitude: 114.1747,
+    popular: true
+  },
+  {
+    id: 'kln-kowloon-station',
+    name: { en: 'Kowloon Station / Elements', tc: '九龍站 / 圓方' },
+    district: { en: 'Yau Tsim Mong', tc: '油尖旺區' },
+    latitude: 22.3048,
+    longitude: 114.1606,
+    popular: false
+  },
+  {
+    id: 'kt-lei-bridge',
+    name: { en: 'Kwun Tong Town Centre', tc: '觀塘市中心' },
+    district: { en: 'Kwun Tong', tc: '觀塘區' },
+    latitude: 22.3113,
+    longitude: 114.2264,
+    popular: false
+  },
+  {
+    id: 'stp-mei-foo',
+    name: { en: 'Mei Foo Sun Chuen', tc: '美孚新邨' },
+    district: { en: 'Sham Shui Po', tc: '深水埗區' },
+    latitude: 22.3520,
+    longitude: 114.1331,
+    popular: false
   }
 ];

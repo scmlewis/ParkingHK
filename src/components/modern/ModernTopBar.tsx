@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Search,
   MapPin,
@@ -38,6 +38,7 @@ interface ModernTopBarProps {
   onOpenSettings: () => void;
   parkingDurationHours: number;
   onChangeDurationHours: (hours: number) => void;
+  matchingLotsCount?: number;
 }
 
 export const ModernTopBar: React.FC<ModernTopBarProps> = ({
@@ -54,7 +55,8 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
   onOpenFavourites,
   onOpenSettings,
   parkingDurationHours,
-  onChangeDurationHours
+  onChangeDurationHours,
+  matchingLotsCount = 0
 }) => {
   const { lang, t } = useI18n();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -78,16 +80,45 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredDestinations = POPULAR_DESTINATIONS.filter(dest => {
-    if (!searchQuery.trim()) return false;
-    const q = searchQuery.toLowerCase().trim();
-    return (
-      dest.name.en.toLowerCase().includes(q) ||
-      dest.name.tc.toLowerCase().includes(q) ||
-      dest.district.en.toLowerCase().includes(q) ||
-      dest.district.tc.toLowerCase().includes(q)
-    );
-  });
+  const filteredDestinations = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const tokens = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return [];
+
+    type ScoredDest = { dest: typeof POPULAR_DESTINATIONS[number]; score: number };
+    const scored: ScoredDest[] = [];
+
+    for (const dest of POPULAR_DESTINATIONS) {
+      const nameEn = dest.name.en.toLowerCase();
+      const nameTc = dest.name.tc.toLowerCase();
+      const distEn = dest.district.en.toLowerCase();
+      const distTc = dest.district.tc.toLowerCase();
+      const allText = `${nameEn} ${nameTc} ${distEn} ${distTc}`;
+
+      // All tokens must match somewhere
+      const allMatch = tokens.every(t => allText.includes(t));
+      if (!allMatch) continue;
+
+      // Score: name match (10) > district match (5), full token in name (bonus)
+      let score = 0;
+      for (const t of tokens) {
+        if (nameEn.includes(t) || nameTc.includes(t)) score += 10;
+        if (distEn.includes(t) || distTc.includes(t)) score += 5;
+      }
+      // Bonus: query appears as substring in name (higher relevance)
+      if (nameEn.includes(searchQuery.toLowerCase()) || nameTc.includes(searchQuery.toLowerCase())) {
+        score += 15;
+      }
+      // Popular destinations rank higher
+      if (dest.popular) score += 2;
+
+      scored.push({ dest, score });
+    }
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .map(s => s.dest);
+  }, [searchQuery]);
 
   const calculateUntilTime = (hours: number) => {
     const d = new Date();
@@ -342,12 +373,12 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
         </div>
 
         {/* ── Search Dropdown ── */}
-        {isSearchOpen && (
+        {isSearchOpen && searchQuery.trim() && (
           <div className="mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto p-2 space-y-1.5">
             {filteredDestinations.length > 0 && (
               <>
                 <div className="text-[10px] font-bold text-slate-400 px-2 py-0.5 uppercase tracking-wider">
-                  {lang === 'tc' ? '搜尋結果' : 'Search Results'}
+                  {lang === 'tc' ? '目的地' : 'Destinations'}
                 </div>
                 {filteredDestinations.map(dest => (
                   <button
@@ -371,6 +402,25 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
                   </button>
                 ))}
               </>
+            )}
+
+            {/* Parking lot match hint */}
+            {matchingLotsCount > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 text-[11px] text-slate-400 border-t border-slate-800 mt-1 pt-2">
+                <span className="font-bold text-sky-400">{matchingLotsCount}</span>
+                <span>
+                  {lang === 'tc'
+                    ? `個停車場匹配「${searchQuery}」`
+                    : `car park${matchingLotsCount !== 1 ? 's' : ''} match "${searchQuery}"`}
+                </span>
+              </div>
+            )}
+
+            {/* No results at all */}
+            {filteredDestinations.length === 0 && matchingLotsCount === 0 && (
+              <div className="px-3 py-4 text-center text-slate-500 text-xs">
+                {lang === 'tc' ? '找不到匹配的地點或停車場' : 'No matching destinations or car parks'}
+              </div>
             )}
           </div>
         )}

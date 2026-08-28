@@ -172,10 +172,8 @@ function MainApp() {
       if (selectedDistrictObj) {
         result = result.filter(item => {
           return (
-            item.lot.district.en.toLowerCase().includes(selectedDistrictObj.name.en.toLowerCase()) ||
-            selectedDistrictObj.name.en.toLowerCase().includes(item.lot.district.en.toLowerCase()) ||
-            item.lot.district.tc.includes(selectedDistrictObj.name.tc) ||
-            selectedDistrictObj.name.tc.includes(item.lot.district.tc)
+            item.lot.district.en === selectedDistrictObj.name.en ||
+            item.lot.district.tc === selectedDistrictObj.name.tc
           );
         });
       }
@@ -391,6 +389,7 @@ function MainApp() {
               onOpenSettings={() => setIsSettingsOpen(true)}
               parkingDurationHours={parkingDurationHours}
               onChangeDurationHours={setParkingDurationHours}
+              matchingLotsCount={searchQuery.trim() ? filteredAndSortedLots.length : 0}
             />
 
             <ParkingMap
@@ -502,6 +501,7 @@ function MainApp() {
             onOpenSettings={() => setIsSettingsOpen(true)}
             parkingDurationHours={parkingDurationHours}
             onChangeDurationHours={setParkingDurationHours}
+            matchingLotsCount={searchQuery.trim() ? filteredAndSortedLots.length : 0}
           />
 
           {/* Horizontal Swipeable Carousel (In Map View only) */}
