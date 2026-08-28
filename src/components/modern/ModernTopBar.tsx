@@ -437,6 +437,7 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
                     type="button"
                     onClick={() => {
                       if (onSelectLot) onSelectLot(scoredLot);
+                      onSearchQueryChange('');
                       setIsSearchOpen(false);
                     }}
                     className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-200 text-xs flex items-center justify-between transition cursor-pointer"
