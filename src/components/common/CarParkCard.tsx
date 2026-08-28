@@ -36,6 +36,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
   const { lot, scoreBreakdown, distanceMeters, walkingMinutes, selectedVacancy, vacancyStatus } = scoredLot;
 
   const hourlyRate = lot.pricing?.hourlyRate;
+  const isEstimated = lot.pricing?.estimated === true;
   const totalCost = hourlyRate ? hourlyRate * parkingDurationHours : null;
   const formattedDist = distanceMeters !== undefined ? formatDistance(distanceMeters) : null;
   const formattedWalking = walkingMinutes !== undefined ? formatWalkingTime(walkingMinutes) : null;
@@ -104,7 +105,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
             <div className="flex items-baseline gap-1 justify-end">
               <span className="text-sm font-black text-sky-400">${totalCost}</span>
               <span className="text-[10px] text-slate-400 font-medium">({parkingDurationHours}h)</span>
-              <span className="text-[10px] text-slate-500 ml-0.5">${hourlyRate}/h</span>
+              <span className="text-[10px] text-slate-500 ml-0.5">${hourlyRate}/h{isEstimated ? ' (Est.)' : ''}</span>
             </div>
           ) : (
             <span className="text-[10px] text-slate-400 font-medium">

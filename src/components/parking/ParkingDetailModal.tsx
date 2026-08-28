@@ -322,7 +322,7 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                       {lot.pricing?.hourlyRate ? `HK$${lot.pricing.hourlyRate}` : (lang === 'tc' ? '現場公布' : 'On-site')}
                     </span>
                     {lot.pricing?.hourlyRate && (
-                      <span className="text-xs text-slate-400 font-semibold">/hr</span>
+                      <span className="text-xs text-slate-400 font-semibold">/hr{lot.pricing.estimated ? ' (Est.)' : ''}</span>
                     )}
                   </div>
                 </div>

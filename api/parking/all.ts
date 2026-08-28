@@ -113,7 +113,9 @@ export async function getCarParksBasic(): Promise<ParkingLot[]> {
           const districtMatch = resolveDistrict(rawDistrictZh, rawDistrictEn, nameZh, nameEn, lat, lng);
           const pcCharges = zhItem.privateCar?.hourlyCharges || [];
           const hasOfficialPricing = pcCharges.length > 0 && typeof pcCharges[0].price === 'number';
-          const hourlyRate = hasOfficialPricing ? pcCharges[0].price : null;
+          const officialHourlyRate = hasOfficialPricing ? pcCharges[0].price : null;
+          const estimatedHourlyRate = districtMatch.region === 'HK_ISLAND' ? 32 : districtMatch.region === 'KOWLOON' ? 28 : 22;
+          const hourlyRate = officialHourlyRate ?? estimatedHourlyRate;
           const heightLimits = zhItem.heightLimits || [];
           const height = heightLimits.length > 0 && typeof heightLimits[0].height === 'number' ? heightLimits[0].height : undefined;
           const vehicleTypes: VehicleType[] = ['PRIVATE_CAR'];
