@@ -11,7 +11,7 @@ ParkingHK is a production-ready Progressive Web App (PWA) built for Hong Kong dr
 ### Real-Time Data
 - Live vacancy feeds from the HKSAR Transport Department (`data.one.gov.hk`)
 - 60-second auto-refresh with countdown timer and manual refresh
-- Data freshness indicators: **LIVE** (<2m), **RECENT** (2–5m), **STALE** (5–15m), **VERY STALE** (>15m)
+- Data freshness indicators: green pulsing = **LIVE**, amber = **CACHED**, red = **OFFLINE**
 
 ### Smart Scoring
 Transparent 100-point recommendation engine combining:
@@ -25,17 +25,23 @@ Transparent 100-point recommendation engine combining:
 - Leaflet map with colour-coded pins (Green = Available, Yellow = Limited, Red = Full)
 - Search radius visualisers (500m, 1km, 2km, 5km)
 - Desktop split view (list + map side by side) and mobile map/list toggle
+- District and sub-district cluster markers at lower zoom levels
+- MarkerCluster for individual car parks at higher zoom levels
 
 ### Discovery & Search
+- Global search — find any car park across Hong Kong by name, address, or district
+- Token-based fuzzy matching with relevance ranking
+- Car park autocomplete suggestions with vacancy badges in the search dropdown
+- Destination search for 37 popular Hong Kong landmarks, malls, and districts
 - GPS-based "Near Me" with Haversine distance and walking estimates
-- Destination search for Hong Kong landmarks, malls, and districts
-- "Search This Area" for map viewport-based discovery
+- GPS re-centres map on every click; validates location is within Hong Kong bounds
 
 ### Filters
 - Vehicle types: Private Car, Motorcycle, Light Goods Vehicle (LGV), Heavy Goods Vehicle (HGV), Coach
 - Region and district filters across all 18 HK districts
-- EV charging and Open Now quick filters
+- EV charging, Has Vacancy, and Open Now quick filters
 - Max distance and max hourly rate controls
+- Limit to map zone toggle (disabled during search for global results)
 
 ### Favourites
 - Save preferred car parks locally (no account required)
@@ -44,9 +50,13 @@ Transparent 100-point recommendation engine combining:
 ### Navigation
 - One-tap handoff to Google Maps, Apple Maps, or Waze
 
-### Bilingual & Themes
+### Bilingual & Theme
 - Traditional Chinese (Hong Kong driver terminology) and English
-- System default, Light, and Dark mode
+- Dark mode only
+
+### Settings
+- Parking duration selector (affects pricing calculations)
+- GitHub repo link and author info
 
 ### PWA
 - Web App Manifest, offline caching, responsive mobile-first UI with 44px+ touch targets
@@ -58,7 +68,7 @@ Transparent 100-point recommendation engine combining:
 | Layer | Technology |
 |-------|------------|
 | Frontend | React 19, TypeScript, Tailwind CSS v4 |
-| Map | Leaflet, MapLibre GL |
+| Map | Leaflet, MapLibre GL, Leaflet.markercluster |
 | Animation | Motion (Framer Motion) |
 | Icons | Lucide React |
 | Build | Vite 6 |
@@ -76,19 +86,20 @@ api/                       # Vercel serverless functions (backend)
     ├── all.ts             # Merged car parks + vacancy data
     └── vacancy.ts         # Vacancy-only refresh
 src/
-├── api/                  # Client-side API fetcher & localStorage caching
-├── domain/               # Core TypeScript type definitions
-├── constants/            # Districts, destinations, vehicle types
-├── services/             # Distance, freshness, recommendation scoring
-├── hooks/                # Data fetching, location, favourites, preferences
+├── api/                   # Client-side API fetcher & localStorage caching
+├── domain/                # Core TypeScript type definitions
+├── constants/             # Districts (18), destinations (37), vehicle types
+├── services/              # Distance, freshness, recommendation scoring
+├── hooks/                 # Data fetching, location, favourites, preferences
 ├── components/
-│   ├── modern/           # TopBar, BottomBar, Carousel, ListView
-│   ├── desktop/          # Desktop split-view side panel
-│   ├── parking/          # Map, detail modal, score explanation
-│   ├── favourites/       # Saved car parks view
-│   └── settings/         # Settings & data disclaimer
-├── i18n/                 # Bilingual translations & context
-└── server/               # Shared data service & seed dataset
+│   ├── modern/            # TopBar, BottomBar, Carousel, ListView
+│   ├── desktop/           # Desktop split-view side panel
+│   ├── parking/           # Map, detail modal, score explanation
+│   ├── favourites/        # Saved car parks view
+│   ├── settings/          # Settings modal
+│   └── common/            # CarParkCard, ScoreBadge, VacancyBadge, AppLogo
+├── i18n/                  # Bilingual translations & context
+└── server/                # Shared data service & seed dataset
 ```
 
 ---
@@ -102,7 +113,7 @@ src/
 ### Install
 
 ```bash
-git clone https://github.com/your-username/ParkingHK.git
+git clone https://github.com/scmlewis/ParkingHK.git
 cd ParkingHK
 npm install
 ```
@@ -125,6 +136,12 @@ npm run build
 ```
 
 Output is served as a static site on Vercel, with `api/` functions handling the backend.
+
+### Lint / Type Check
+
+```bash
+npm run lint          # runs tsc --noEmit
+```
 
 ### Environment Variables
 
