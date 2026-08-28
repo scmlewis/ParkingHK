@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { AppLogo } from '../common/AppLogo';
 import { useI18n } from '../../i18n/context';
-import { Destination, FilterState } from '../../domain/types';
+import { Destination, FilterState, ScoredParkingLot } from '../../domain/types';
 import { POPULAR_DESTINATIONS } from '../../constants/destinations';
 import { DISTRICTS } from '../../constants/districts';
 import { VEHICLE_TYPES } from '../../constants/vehicleTypes';
@@ -39,6 +39,8 @@ interface ModernTopBarProps {
   parkingDurationHours: number;
   onChangeDurationHours: (hours: number) => void;
   matchingLotsCount?: number;
+  lots?: ScoredParkingLot[];
+  onSelectLot?: (lot: ScoredParkingLot) => void;
 }
 
 export const ModernTopBar: React.FC<ModernTopBarProps> = ({
@@ -56,7 +58,9 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
   onOpenSettings,
   parkingDurationHours,
   onChangeDurationHours,
-  matchingLotsCount = 0
+  matchingLotsCount = 0,
+  lots = [],
+  onSelectLot
 }) => {
   const { lang, t } = useI18n();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -119,6 +123,23 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
       .sort((a, b) => b.score - a.score)
       .map(s => s.dest);
   }, [searchQuery]);
+
+  // Car park name autocomplete
+  const matchingLots = useMemo(() => {
+    if (!searchQuery.trim() || lots.length === 0) return [];
+    const q = searchQuery.toLowerCase().trim();
+    return lots
+      .filter(item => {
+        const lot = item.lot;
+        return (
+          lot.name.en.toLowerCase().includes(q) ||
+          lot.name.tc.toLowerCase().includes(q) ||
+          lot.address.en.toLowerCase().includes(q) ||
+          lot.address.tc.toLowerCase().includes(q)
+        );
+      })
+      .slice(0, 8); // Limit to 8 suggestions
+  }, [searchQuery, lots]);
 
   const calculateUntilTime = (hours: number) => {
     const d = new Date();
@@ -374,7 +395,7 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
 
         {/* ── Search Dropdown ── */}
         {isSearchOpen && searchQuery.trim() && (
-          <div className="mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto p-2 space-y-1.5">
+          <div className="mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto p-2 space-y-1.5">
             {filteredDestinations.length > 0 && (
               <>
                 <div className="text-[10px] font-bold text-slate-400 px-2 py-0.5 uppercase tracking-wider">
@@ -404,7 +425,46 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
               </>
             )}
 
-            {/* Parking lot match hint */}
+            {/* Car park autocomplete suggestions */}
+            {matchingLots.length > 0 && (
+              <>
+                <div className="text-[10px] font-bold text-slate-400 px-2 py-0.5 uppercase tracking-wider border-t border-slate-800 mt-1 pt-2">
+                  {lang === 'tc' ? '停車場' : 'Car Parks'}
+                </div>
+                {matchingLots.map(scoredLot => (
+                  <button
+                    key={scoredLot.lot.id}
+                    type="button"
+                    onClick={() => {
+                      if (onSelectLot) onSelectLot(scoredLot);
+                      setIsSearchOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-slate-200 text-xs flex items-center justify-between transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 truncate min-w-0">
+                      <Car className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="font-semibold text-slate-100 truncate">{scoredLot.lot.name[lang]}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {scoredLot.selectedVacancy?.vacancy != null && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          scoredLot.selectedVacancy.vacancy > 10
+                            ? 'bg-emerald-900/60 text-emerald-300'
+                            : scoredLot.selectedVacancy.vacancy > 0
+                            ? 'bg-amber-900/60 text-amber-300'
+                            : 'bg-red-900/60 text-red-300'
+                        }`}>
+                          {scoredLot.selectedVacancy.vacancy}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-500">{scoredLot.lot.district[lang]}</span>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Parking lot match count */}
             {matchingLotsCount > 0 && (
               <div className="flex items-center gap-2 px-3 py-2 text-[11px] text-slate-400 border-t border-slate-800 mt-1 pt-2">
                 <span className="font-bold text-sky-400">{matchingLotsCount}</span>
@@ -417,7 +477,7 @@ export const ModernTopBar: React.FC<ModernTopBarProps> = ({
             )}
 
             {/* No results at all */}
-            {filteredDestinations.length === 0 && matchingLotsCount === 0 && (
+            {filteredDestinations.length === 0 && matchingLots.length === 0 && (
               <div className="px-3 py-4 text-center text-slate-500 text-xs">
                 {lang === 'tc' ? '找不到匹配的地點或停車場' : 'No matching destinations or car parks'}
               </div>

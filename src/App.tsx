@@ -216,7 +216,8 @@ function MainApp() {
     }
 
     // 9. Zone Limitation (Limit results to visible map zone)
-    if (filters.limitToMapZone && mapBounds) {
+    // Skip when searching — show all matching car parks globally
+    if (filters.limitToMapZone && mapBounds && !searchQuery.trim()) {
       const latSpan = mapBounds.north - mapBounds.south;
       const lngSpan = mapBounds.east - mapBounds.west;
       // Slight 4% buffer so boundary car parks are smoothly included
@@ -236,8 +237,10 @@ function MainApp() {
     }
 
     // 10. Sorting & Map Viewport Prioritization
+    // Skip in-bounds prioritization when searching — relevance takes priority
+    const hasQuery = searchQuery.trim().length > 0;
     return [...result].sort((a, b) => {
-      if (mapBounds && (customSearchLocation || isMapMoved)) {
+      if (!hasQuery && mapBounds && (customSearchLocation || isMapMoved)) {
         const aInBounds =
           a.lot.latitude !== null &&
           a.lot.latitude <= mapBounds.north &&
@@ -305,6 +308,15 @@ function MainApp() {
 
   const handleDistrictZoom = (lat: number, lng: number) => {
     setZoomTarget({ lat, lng, zoom: 15.2, timestamp: Date.now() });
+  };
+
+  const handleSelectLotFromSearch = (lot: ScoredParkingLot) => {
+    setSelectedLotForDetail(lot);
+    if (lot.lot.latitude && lot.lot.longitude) {
+      setCustomSearchLocation(null);
+      setIsMapMoved(false);
+      setZoomTarget({ lat: lot.lot.latitude, lng: lot.lot.longitude, zoom: 16, timestamp: Date.now() });
+    }
   };
 
   return (
@@ -390,6 +402,8 @@ function MainApp() {
               parkingDurationHours={parkingDurationHours}
               onChangeDurationHours={setParkingDurationHours}
               matchingLotsCount={searchQuery.trim() ? filteredAndSortedLots.length : 0}
+              lots={filteredAndSortedLots}
+              onSelectLot={handleSelectLotFromSearch}
             />
 
             <ParkingMap
@@ -502,6 +516,8 @@ function MainApp() {
             parkingDurationHours={parkingDurationHours}
             onChangeDurationHours={setParkingDurationHours}
             matchingLotsCount={searchQuery.trim() ? filteredAndSortedLots.length : 0}
+            lots={filteredAndSortedLots}
+            onSelectLot={handleSelectLotFromSearch}
           />
 
           {/* Horizontal Swipeable Carousel (In Map View only) */}
