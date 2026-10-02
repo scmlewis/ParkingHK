@@ -15,8 +15,8 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon.svg" />
     <link rel="manifest" href="/manifest.json" />
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Tile CDN preconnect (map tiles are the largest below-fold payload) -->
+    <link rel="preconnect" href="https://services.arcgisonline.com" crossorigin />
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
     <div id="root"></div>

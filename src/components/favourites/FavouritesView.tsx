@@ -60,10 +60,10 @@ export const FavouritesView: React.FC<FavouritesViewProps> = ({
               key={scoredLot.lot.id}
               scoredLot={scoredLot}
               isFav={true}
-              onToggleFav={() => onToggleFavourite(scoredLot.lot.id)}
-              onSelect={() => onSelectLot(scoredLot)}
-              onOpenDetail={() => onSelectLot(scoredLot)}
-              onExplainScore={() => onExplainScore(scoredLot)}
+              onToggleFav={onToggleFavourite}
+              onSelect={onSelectLot}
+              onOpenDetail={onSelectLot}
+              onExplainScore={onExplainScore}
             />
           ))}
         </div>

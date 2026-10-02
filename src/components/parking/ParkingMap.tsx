@@ -11,6 +11,9 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface ParkingMapProps {
   lots: ScoredParkingLot[];
+  // Unfiltered lot list for district pill counts — pills show stable totals
+  // instead of recomputing (and visibly shrinking) on every keystroke
+  allLots?: ScoredParkingLot[];
   selectedLot: ScoredParkingLot | null;
   onSelectLot: (lot: ScoredParkingLot | null) => void;
   onOpenDetail?: (lot: ScoredParkingLot | null) => void;
@@ -74,6 +77,28 @@ function createCarparkMarkerSvg(
   `;
 }
 
+// Shared icon builder so full rebuilds and in-place diff updates produce identical icons
+function buildCarparkIcon(item: ScoredParkingLot, isSelected: boolean, durationHours: number): L.DivIcon {
+  const { lot, vacancyStatus, selectedVacancy } = item;
+  const count = selectedVacancy?.vacancy ?? null;
+  const markerHtml = createCarparkMarkerSvg(
+    lot.id,
+    vacancyStatus,
+    count,
+    lot.pricing?.hourlyRate && !lot.pricing?.estimated ? lot.pricing.hourlyRate : null,
+    lot.facilities?.evCharging,
+    isSelected,
+    durationHours,
+    lot.openingStatus === 'CLOSED'
+  );
+  return L.divIcon({
+    className: 'custom-carpark-marker',
+    html: markerHtml,
+    iconSize: [84, 30],
+    iconAnchor: [42, 15]
+  });
+}
+
 // Hong Kong Territory strict geographic boundary constants
 export const HK_BOUNDS = L.latLngBounds(
   [22.08, 113.72], // South-West
@@ -118,6 +143,7 @@ function getMatchedSubDistrictsForLot(lot: { id: string; name: { en: string; tc:
 
 export const ParkingMap: React.FC<ParkingMapProps> = ({
   lots,
+  allLots,
   selectedLot,
   onSelectLot,
   onOpenDetail,
@@ -142,6 +168,14 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
   const userMarkerRef = useRef<L.Marker | null>(null);
   const circleLayerRef = useRef<L.Circle | null>(null);
   const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
+  // Diff-build state: lets Tier-3 updates patch changed icons via setIcon()
+  // instead of clearLayers/addLayers on every duration change or 60-s refresh.
+  // refreshVacancies reuses the same lot object for unchanged lots, so per-id
+  // reference equality identifies exactly which icons need rebuilding.
+  const prevItemsRef = useRef<Map<string, ScoredParkingLot>>(new Map());
+  const prevDurationRef = useRef<number>(parkingDurationHours);
+  const prevTierRef = useRef<number>(-1);
+  const prevLangRef = useRef<string>(lang);
   const selectedLotIdRef = useRef<string | null>(null);
   selectedLotIdRef.current = selectedLot?.lot.id ?? null;
 
@@ -157,14 +191,14 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
   const [currentZoom, setCurrentZoom] = useState(13);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Compute car parks per District
+  // Compute car parks per District (from unfiltered list — stable across keystrokes)
   const districtCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     DISTRICTS.forEach(d => {
       counts[d.id] = 0;
     });
 
-    lots.forEach(item => {
+    (allLots ?? lots).forEach(item => {
       const lot = item.lot;
       if (!lot.latitude || !lot.longitude) return;
 
@@ -192,16 +226,17 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
     });
 
     return counts;
-  }, [lots]);
+  }, [allLots, lots]);
 
   // Compute car parks per Sub-District with cached lookup for O(N) performance
+  // (from unfiltered list — stable across keystrokes)
   const subDistrictCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     SUB_DISTRICTS.forEach(sub => {
       counts[sub.id] = 0;
     });
 
-    lots.forEach(item => {
+    (allLots ?? lots).forEach(item => {
       const lot = item.lot;
       if (!lot.latitude || !lot.longitude) return;
 
@@ -221,7 +256,7 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
     });
 
     return counts;
-  }, [lots]);
+  }, [allLots, lots]);
 
   // External Zoom Target trigger
   useEffect(() => {
@@ -512,6 +547,42 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
     if (!map || !clusterGroup || !districtLayer) return;
 
     const zoom = map.getZoom();
+    const tier = zoom < 13.5 ? 0 : zoom < 14.8 ? 1 : 2;
+
+    // Tier-3 diff path: same tier + same language + identical lot id-set
+    // (e.g. duration slider or 60-s vacancy refresh where most lot objects
+    // are referentially unchanged) → patch icons in place, no layer churn.
+    if (tier === 2 && prevTierRef.current === 2 && prevLangRef.current === lang) {
+      const markersMap = markersMapRef.current;
+      let sameSet = markersMap.size > 0;
+      let geoCount = 0;
+      if (sameSet) {
+        for (const item of lots) {
+          if (!item.lot.latitude || !item.lot.longitude) continue;
+          geoCount++;
+          if (!markersMap.has(item.lot.id)) { sameSet = false; break; }
+        }
+        if (sameSet && geoCount !== markersMap.size) sameSet = false;
+      }
+      if (sameSet) {
+        const durationChanged = prevDurationRef.current !== parkingDurationHours;
+        const currentSelectedId = selectedLotIdRef.current;
+        const prevItems = prevItemsRef.current;
+        const nextItems = new Map<string, ScoredParkingLot>();
+        for (const item of lots) {
+          nextItems.set(item.lot.id, item);
+          if (!item.lot.latitude || !item.lot.longitude) continue;
+          if (!durationChanged && prevItems.get(item.lot.id) === item) continue;
+          const marker = markersMap.get(item.lot.id);
+          if (marker) {
+            marker.setIcon(buildCarparkIcon(item, currentSelectedId === item.lot.id, parkingDurationHours));
+          }
+        }
+        prevItemsRef.current = nextItems;
+        prevDurationRef.current = parkingDurationHours;
+        return;
+      }
+    }
 
     clusterGroup.clearLayers();
     districtLayer.clearLayers();
@@ -597,34 +668,17 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
       // Tier 3: Individual Car Parks & Live Prices (Clustered & Batched)
       const markers: L.Marker[] = [];
       const currentSelectedId = selectedLotIdRef.current;
+      const nextItems = new Map<string, ScoredParkingLot>();
 
       lots.forEach(item => {
-        const { lot, vacancyStatus, selectedVacancy } = item;
+        const { lot, vacancyStatus } = item;
+        nextItems.set(lot.id, item);
         if (!lot.latitude || !lot.longitude) return;
 
         const isSelected = currentSelectedId === lot.id;
-        const count = selectedVacancy?.vacancy ?? null;
-
-        const markerHtml = createCarparkMarkerSvg(
-          lot.id,
-          vacancyStatus,
-          count,
-          lot.pricing?.hourlyRate && !lot.pricing?.estimated ? lot.pricing.hourlyRate : null,
-          lot.facilities?.evCharging,
-          isSelected,
-          parkingDurationHours,
-          lot.openingStatus === 'CLOSED'
-        );
-
-        const customIcon = L.divIcon({
-          className: 'custom-carpark-marker',
-          html: markerHtml,
-          iconSize: [84, 30],
-          iconAnchor: [42, 15]
-        });
 
         const marker = L.marker([lot.latitude, lot.longitude], {
-          icon: customIcon,
+          icon: buildCarparkIcon(item, isSelected, parkingDurationHours),
           zIndexOffset: isSelected ? 800 : (vacancyStatus === 'AVAILABLE' ? 100 : 10)
         });
 
@@ -638,7 +692,11 @@ export const ParkingMap: React.FC<ParkingMapProps> = ({
       });
 
       clusterGroup.addLayers(markers);
+      prevItemsRef.current = nextItems;
     }
+    prevTierRef.current = tier;
+    prevLangRef.current = lang;
+    prevDurationRef.current = parkingDurationHours;
   }, [lots, lang, currentZoom, districtCounts, subDistrictCounts, parkingDurationHours]);
 
   // Fast DOM selection class toggle & Pan/Zoom to center without rebuilding all markers

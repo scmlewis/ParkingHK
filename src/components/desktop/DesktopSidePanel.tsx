@@ -246,10 +246,10 @@ export const DesktopSidePanel: React.FC<DesktopSidePanelProps> = ({
                     isSelected={isSelected}
                     isFav={isFavourite(scoredLot.lot.id)}
                     parkingDurationHours={parkingDurationHours}
-                    onSelect={() => onSelectLot(scoredLot)}
-                    onOpenDetail={() => onOpenDetail(scoredLot)}
-                    onExplainScore={() => onExplainScore(scoredLot)}
-                    onToggleFav={() => onToggleFavourite(scoredLot.lot.id)}
+                    onSelect={onSelectLot}
+                    onOpenDetail={onOpenDetail}
+                    onExplainScore={onExplainScore}
+                    onToggleFav={onToggleFavourite}
                   />
                 </div>
               );

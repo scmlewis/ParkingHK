@@ -11,6 +11,19 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // Split heavy, independently-versioned deps so first paint stays lean:
+          // initial chunk = app shell; leaflet/motion load with the map/modals
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-leaflet': ['leaflet', 'leaflet.markercluster'],
+            'vendor-motion': ['motion/react'],
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.

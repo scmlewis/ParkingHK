@@ -14,11 +14,13 @@ import { formatDistance, formatWalkingTime } from '../../services/distanceServic
 export interface CarParkCardProps {
   scoredLot: ScoredParkingLot;
   isSelected?: boolean;
-  onSelect?: () => void;
-  onOpenDetail: () => void;
-  onExplainScore?: () => void;
+  // Stable handler references (called with scoredLot / lot id) so that
+  // memo() can actually bail out — call sites must NOT wrap these in arrows
+  onSelect?: (lot: ScoredParkingLot) => void;
+  onOpenDetail: (lot: ScoredParkingLot) => void;
+  onExplainScore?: (lot: ScoredParkingLot) => void;
   isFav: boolean;
-  onToggleFav: () => void;
+  onToggleFav: (id: string) => void;
   parkingDurationHours?: number;
 }
 
@@ -66,9 +68,9 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
 
   const handleCardClick = () => {
     if (onSelect) {
-      onSelect();
+      onSelect(scoredLot);
     } else {
-      onOpenDetail();
+      onOpenDetail(scoredLot);
     }
   };
 
@@ -150,7 +152,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
             size="sm"
             onExplainClick={onExplainScore ? (e => {
               e?.stopPropagation();
-              onExplainScore();
+              onExplainScore(scoredLot);
             }) : undefined}
           />
         </div>
@@ -171,7 +173,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
           type="button"
           onClick={e => {
             e.stopPropagation();
-            onOpenDetail();
+            onOpenDetail(scoredLot);
           }}
           className="py-1 sm:py-1.5 px-2 sm:px-2.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-300 hover:text-white text-[11px] sm:text-xs font-semibold transition cursor-pointer flex items-center gap-0.5"
         >
@@ -183,7 +185,7 @@ export const CarParkCard: React.FC<CarParkCardProps> = memo(({
           type="button"
           onClick={e => {
             e.stopPropagation();
-            onToggleFav();
+            onToggleFav(lot.id);
           }}
           className={`p-1 sm:p-1.5 rounded-lg border transition cursor-pointer flex items-center justify-center ${
             isFav

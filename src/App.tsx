@@ -4,18 +4,19 @@
  * High-performance batched rendering for silky-smooth 60fps UX.
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useDeferredValue, lazy, Suspense } from 'react';
 import { I18nProvider, useI18n } from './i18n/context';
 import { ModernTopBar } from './components/modern/ModernTopBar';
 import { ModernBottomBar } from './components/modern/ModernBottomBar';
 import { ModernCarousel } from './components/modern/ModernCarousel';
 import { ModernListView } from './components/modern/ModernListView';
-import { DesktopSidePanel } from './components/desktop/DesktopSidePanel';
 import { ParkingMap } from './components/parking/ParkingMap';
-import { ParkingDetailModal } from './components/parking/ParkingDetailModal';
-import { ScoreExplainModal } from './components/parking/ScoreExplainModal';
-import { SettingsModal } from './components/settings/SettingsModal';
-import { FavouritesView } from './components/favourites/FavouritesView';
+// Below-the-fold / on-demand UI is code-split so first paint stays lean
+const DesktopSidePanel = lazy(() => import('./components/desktop/DesktopSidePanel').then(m => ({ default: m.DesktopSidePanel })));
+const ParkingDetailModal = lazy(() => import('./components/parking/ParkingDetailModal').then(m => ({ default: m.ParkingDetailModal })));
+const ScoreExplainModal = lazy(() => import('./components/parking/ScoreExplainModal').then(m => ({ default: m.ScoreExplainModal })));
+const SettingsModal = lazy(() => import('./components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const FavouritesView = lazy(() => import('./components/favourites/FavouritesView').then(m => ({ default: m.FavouritesView })));
 
 import { useParkingData } from './hooks/useParkingData';
 import { useUserLocation } from './hooks/useUserLocation';
@@ -32,17 +33,19 @@ import { motion, AnimatePresence } from 'motion/react';
 function MainApp() {
   const { lang, t } = useI18n();
 
-  // Responsive device tracking
+  // Responsive device tracking — matchMedia fires only on breakpoint
+  // crossings, unlike resize which re-renders the tree per pixel dragged
   const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth >= 768 : false
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : false
   );
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
+    const mq = window.matchMedia('(min-width: 768px)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    mq.addEventListener('change', handleChange);
+    return () => mq.removeEventListener('change', handleChange);
   }, []);
 
   // Data & State Hooks
@@ -53,7 +56,6 @@ function MainApp() {
     error,
     isOffline,
     dataSource,
-    secondsUntilNextRefresh,
     refreshNow,
     retryInitialLoad
   } = useParkingData();
@@ -99,6 +101,9 @@ function MainApp() {
 
   // Search input state
   const [searchQuery, setSearchQuery] = useState<string>('');
+  // Deferred query drives the expensive filter/sort/map pipeline so typing
+  // stays responsive (input + autocomplete use the instant value instead)
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   // Map viewport tracking state for Area Search
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
@@ -141,24 +146,25 @@ function MainApp() {
     return lots.map(lot => calculateParkingScore(lot, activeLat, activeLng, filters.vehicleType));
   }, [lots, activeLat, activeLng, filters.vehicleType]);
 
+  // Lowercase search corpus built once per scoredLots — per-keystroke filtering
+  // then does a single Map lookup + includes() instead of 6x toLowerCase() per lot
+  const searchCorpus = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of scoredLots) {
+      const lot = item.lot;
+      map.set(lot.id, `${lot.name.en} ${lot.name.tc} ${lot.address.en} ${lot.address.tc} ${lot.district.en} ${lot.district.tc}`.toLowerCase());
+    }
+    return map;
+  }, [scoredLots]);
+
   // Apply filters and sorting
   const filteredAndSortedLots: ScoredParkingLot[] = useMemo(() => {
     let result = scoredLots;
 
-    // 1. Search Query (Name, Address, District)
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(item => {
-        const lot = item.lot;
-        return (
-          lot.name.en.toLowerCase().includes(q) ||
-          lot.name.tc.toLowerCase().includes(q) ||
-          lot.address.en.toLowerCase().includes(q) ||
-          lot.address.tc.toLowerCase().includes(q) ||
-          lot.district.en.toLowerCase().includes(q) ||
-          lot.district.tc.toLowerCase().includes(q)
-        );
-      });
+    // 1. Search Query (Name, Address, District) — uses deferred value
+    if (deferredSearchQuery.trim()) {
+      const q = deferredSearchQuery.toLowerCase().trim();
+      result = result.filter(item => searchCorpus.get(item.lot.id)?.includes(q) ?? false);
     }
 
     // 2. Region filter
@@ -218,7 +224,7 @@ function MainApp() {
 
     // 9. Zone Limitation (Limit results to visible map zone)
     // Skip when searching — show all matching car parks globally
-    if (filters.limitToMapZone && mapBounds && !searchQuery.trim()) {
+    if (filters.limitToMapZone && mapBounds && !deferredSearchQuery.trim()) {
       const latSpan = mapBounds.north - mapBounds.south;
       const lngSpan = mapBounds.east - mapBounds.west;
       // Slight 4% buffer so boundary car parks are smoothly included
@@ -239,21 +245,25 @@ function MainApp() {
 
     // 10. Sorting & Map Viewport Prioritization
     // Skip in-bounds prioritization when searching — relevance takes priority
-    const hasQuery = searchQuery.trim().length > 0;
+    // inBounds hoisted out of the comparator: computed once per lot, not per comparison
+    const hasQuery = deferredSearchQuery.trim().length > 0;
+    const inBoundsMap = new Map<string, boolean>();
+    if (!hasQuery && mapBounds && (customSearchLocation || isMapMoved)) {
+      for (const item of result) {
+        const lat = item.lot.latitude;
+        const lng = item.lot.longitude;
+        inBoundsMap.set(
+          item.lot.id,
+          lat !== null && lng !== null &&
+          lat <= mapBounds.north && lat >= mapBounds.south &&
+          lng <= mapBounds.east && lng >= mapBounds.west
+        );
+      }
+    }
     return [...result].sort((a, b) => {
-      if (!hasQuery && mapBounds && (customSearchLocation || isMapMoved)) {
-        const aInBounds =
-          a.lot.latitude !== null &&
-          a.lot.latitude <= mapBounds.north &&
-          a.lot.latitude >= mapBounds.south &&
-          a.lot.longitude <= mapBounds.east &&
-          a.lot.longitude >= mapBounds.west;
-        const bInBounds =
-          b.lot.latitude !== null &&
-          b.lot.latitude <= mapBounds.north &&
-          b.lot.latitude >= mapBounds.south &&
-          b.lot.longitude <= mapBounds.east &&
-          b.lot.longitude >= mapBounds.west;
+      if (inBoundsMap.size > 0) {
+        const aInBounds = inBoundsMap.get(a.lot.id) ?? false;
+        const bInBounds = inBoundsMap.get(b.lot.id) ?? false;
 
         if (aInBounds && !bInBounds) return -1;
         if (!aInBounds && bInBounds) return 1;
@@ -279,7 +289,7 @@ function MainApp() {
       }
       return 0;
     });
-  }, [scoredLots, searchQuery, filters, sortOption, mapBounds, customSearchLocation, isMapMoved]);
+  }, [scoredLots, searchCorpus, deferredSearchQuery, filters, sortOption, mapBounds, customSearchLocation, isMapMoved]);
 
   // Favourites lots
   const favouriteLots = useMemo(() => {
@@ -366,6 +376,7 @@ function MainApp() {
         <div className="flex-1 w-full h-full flex overflow-hidden relative">
           {/* Left Column: Dedicated Car Park List Side Panel */}
           <div className="w-[400px] lg:w-[440px] xl:w-[480px] h-full shrink-0 relative z-20 shadow-2xl">
+            <Suspense fallback={<div className="w-full h-full bg-slate-900" />}>
             <DesktopSidePanel
               lots={filteredAndSortedLots}
               isLoading={isLoading}
@@ -386,6 +397,7 @@ function MainApp() {
               isOffline={isOffline}
               dataSource={dataSource}
             />
+            </Suspense>
           </div>
 
           {/* Right Column: Full Interactive Leaflet Map */}
@@ -421,6 +433,7 @@ function MainApp() {
 
             <ParkingMap
               lots={filteredAndSortedLots}
+              allLots={scoredLots}
               selectedLot={selectedLotForDetail}
               onSelectLot={setSelectedLotForDetail}
               onOpenDetail={setSelectedLotForDetail}
@@ -451,6 +464,7 @@ function MainApp() {
           >
             <ParkingMap
               lots={filteredAndSortedLots}
+              allLots={scoredLots}
               selectedLot={selectedLotForDetail}
               onSelectLot={setSelectedLotForDetail}
               onOpenDetail={setSelectedLotForDetail}
@@ -595,6 +609,7 @@ function MainApp() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
+              <Suspense fallback={null}>
               <FavouritesView
                 favouriteLots={favouriteLots}
                 onToggleFavourite={toggleFavourite}
@@ -606,12 +621,14 @@ function MainApp() {
                 onExplainScore={setLotForScoreExplain}
                 onGoToExplore={() => setIsFavouritesModalOpen(false)}
               />
+              </Suspense>
             </div>
           </div>
         </div>
       )}
 
       {/* ── Carpark Details Modal ── */}
+      <Suspense fallback={null}>
       <ParkingDetailModal
         scoredLot={selectedLotForDetail}
         isFavourite={selectedLotForDetail ? isFavourite(selectedLotForDetail.lot.id) : false}
@@ -620,20 +637,25 @@ function MainApp() {
         onExplainScore={lot => setLotForScoreExplain(lot)}
         parkingDurationHours={parkingDurationHours}
       />
+      </Suspense>
 
       {/* ── AI Score Explain Modal ── */}
+      <Suspense fallback={null}>
       <ScoreExplainModal
         scoredLot={lotForScoreExplain}
         onClose={() => setLotForScoreExplain(null)}
       />
+      </Suspense>
 
       {/* ── App Settings Modal ── */}
+      <Suspense fallback={null}>
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         theme={theme}
         onThemeChange={setTheme}
       />
+      </Suspense>
     </div>
   );
 }

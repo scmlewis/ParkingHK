@@ -93,8 +93,10 @@ export function useUserLocation() {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        timeout: 8000,
+        // Accept a cached fix up to 60s old: recenter taps reuse the last fix
+        // instead of forcing a slow, battery-hungry cold GPS lock every time
+        maximumAge: 60000
       }
     );
   }, []);

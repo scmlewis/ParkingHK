@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 const STORAGE_KEY = 'parkinghk_favourite_ids_v1';
 
@@ -34,12 +34,16 @@ export function useFavourites() {
     });
   }, []);
 
+  // O(1) membership set rebuilt only when ids change (per-card includes() was O(n))
+  const favouriteIdSet = useMemo(() => new Set(favouriteIds), [favouriteIds]);
+
   const isFavourite = useCallback((id: string) => {
-    return favouriteIds.includes(id);
-  }, [favouriteIds]);
+    return favouriteIdSet.has(id);
+  }, [favouriteIdSet]);
 
   return {
     favouriteIds,
+    favouriteIdSet,
     toggleFavourite,
     isFavourite,
     count: favouriteIds.length

@@ -12,10 +12,12 @@ export function useParkingData() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
   const [dataSource, setDataSource] = useState<DataSource>('live');
-  const [secondsUntilNextRefresh, setSecondsUntilNextRefresh] = useState<number>(REFRESH_INTERVAL_SECONDS);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Guards overlapping refreshes: timer + manual refresh + online-event
+  // retries must never have two vacancy fetches in flight (last-to-resolve
+  // would otherwise overwrite fresher data).
+  const refreshInFlightRef = useRef<boolean>(false);
 
   // Online / Offline listeners
   useEffect(() => {
@@ -45,7 +47,6 @@ export function useParkingData() {
       setLots(result.lots);
       setDataSource(result.dataSource);
       setLastUpdated(new Date(result.timestamp));
-      setSecondsUntilNextRefresh(REFRESH_INTERVAL_SECONDS);
     } catch (err) {
       console.error('Failed to load parking data:', err);
       setError((err as Error).message || 'Failed to fetch parking data');
@@ -57,6 +58,8 @@ export function useParkingData() {
 
   // Lightweight refresh (vacancies only)
   const refreshVacancies = useCallback(async (force = false) => {
+    if (refreshInFlightRef.current) return; // dedupe overlapping refreshes
+    refreshInFlightRef.current = true;
     setIsRefreshing(true);
     try {
       const newVacancies = await fetchVacanciesOnly(force);
@@ -79,8 +82,8 @@ export function useParkingData() {
     } catch (err) {
       console.warn('Could not refresh dynamic vacancies:', err);
     } finally {
+      refreshInFlightRef.current = false;
       setIsRefreshing(false);
-      setSecondsUntilNextRefresh(REFRESH_INTERVAL_SECONDS);
     }
   }, []);
 
@@ -89,21 +92,16 @@ export function useParkingData() {
     loadData(true);
   }, [loadData]);
 
-  // Periodic refresh & countdown timer
+  // Periodic refresh (no per-second countdown — that re-rendered the whole
+  // tree 60x/min for a value nothing renders; refresh resets the cycle)
   useEffect(() => {
-    // Refresh interval
     timerRef.current = setInterval(() => {
+      if (document.hidden) return; // background tabs don't poll
       refreshVacancies(false);
     }, REFRESH_INTERVAL_SECONDS * 1000);
 
-    // Countdown interval (every second)
-    countdownRef.current = setInterval(() => {
-      setSecondsUntilNextRefresh(prev => (prev > 1 ? prev - 1 : REFRESH_INTERVAL_SECONDS));
-    }, 1000);
-
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, [refreshVacancies]);
 
@@ -120,7 +118,6 @@ export function useParkingData() {
     lastUpdated,
     isOffline,
     dataSource,
-    secondsUntilNextRefresh,
     refreshNow: handleManualRefresh,
     retryInitialLoad: () => loadData(true)
   };

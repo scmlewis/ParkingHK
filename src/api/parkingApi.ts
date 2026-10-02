@@ -1,5 +1,6 @@
 import { ParkingLot, Vacancy } from '../domain/types';
-import { HK_CARPARK_SEED_DATA } from '../server/mockData';
+// NOTE: seed dataset is dynamically imported ONLY on the fallback path so it
+// never ships inside the initial bundle on the happy path (see catch below).
 
 const CACHE_KEY_PARKING_LOTS = 'parkinghk_cached_lots_v1';
 const CACHE_KEY_LAST_FETCH = 'parkinghk_last_fetch_ts';
@@ -18,12 +19,24 @@ export async function fetchAllParkingLots(): Promise<{ lots: ParkingLot[]; dataS
 
     const json = await res.json();
     if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-      // Save to localStorage for offline cache
-      try {
-        localStorage.setItem(CACHE_KEY_PARKING_LOTS, JSON.stringify(json.data));
-        localStorage.setItem(CACHE_KEY_LAST_FETCH, json.timestamp || new Date().toISOString());
-      } catch {
-        // LocalStorage quota or private mode error
+      // Persist to localStorage for offline cache — deferred off the critical
+      // path (JSON serialization of ~575 lots stalls the main thread) with a
+      // size guard so quota errors can't break the happy path.
+      const payload = json.data;
+      const persist = () => {
+        try {
+          const serialized = JSON.stringify(payload);
+          if (serialized.length > 4 * 1024 * 1024) return; // skip oversized payloads
+          localStorage.setItem(CACHE_KEY_PARKING_LOTS, serialized);
+          localStorage.setItem(CACHE_KEY_LAST_FETCH, json.timestamp || new Date().toISOString());
+        } catch {
+          // LocalStorage quota or private mode error
+        }
+      };
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(persist, { timeout: 5000 });
+      } else {
+        setTimeout(persist, 0);
       }
       return {
         lots: json.data,
@@ -53,6 +66,8 @@ export async function fetchAllParkingLots(): Promise<{ lots: ParkingLot[]; dataS
       // Ignore
     }
 
+    // Last resort: bundled seed dataset (lazy chunk, only fetched on total failure)
+    const { HK_CARPARK_SEED_DATA } = await import('../server/mockData');
     return {
       lots: HK_CARPARK_SEED_DATA,
       dataSource: 'seed',
