@@ -35,7 +35,8 @@ export function calculateParkingScore(
 
   // 2. Availability score (out of 40)
   // Closed lots get 0 — vacancies are irrelevant when the lot is not operating
-  // Unknown vacancy gets a low score — must not outperform known-full lots
+  // Unknown vacancy scores low (5) so it never outranks decent known data,
+  // but sits just above known-full (0) since an unknown lot may still have spaces
   let availabilityScore = 0;
   if (lot.openingStatus === 'CLOSED') {
     availabilityScore = 0;
@@ -62,7 +63,8 @@ export function calculateParkingScore(
   );
   const walkingMinutes = estimateWalkingMinutes(distanceMeters);
 
-  // Unknown distance gets a low score — must not outperform known-far lots
+  // Unknown distance scores low (5) so it never outranks decent known data,
+  // but sits just above known-far (2) since the real location may be closer
   let distanceScore = 5;
   if (distanceMeters !== null) {
     if (distanceMeters <= 250) {
@@ -83,7 +85,8 @@ export function calculateParkingScore(
   // 4. Price score (out of 20)
   // Standard HK hourly rates: <$20 (very cheap), $20-$30 (standard), $31-$45 (premium), >$45 (expensive)
   // Estimated (region-based) prices don't differentiate — give neutral score
-  // Unknown (no pricing data) gets a low score — must not outperform known-expensive lots
+  // Unknown (no pricing data) scores low (5) so it never outranks decent known data,
+  // but sits just above known-expensive (2) since the real price may be cheaper
   // Only official gov-published prices should influence ranking
   const hourlyRate = lot.pricing?.hourlyRate;
   const isEstimated = lot.pricing?.estimated === true;
@@ -166,12 +169,9 @@ export function calculateParkingScore(
     }
   }
 
-  // Price reason
-  if (hourlyRate !== undefined && hourlyRate !== null) {
-    if (isEstimated) {
-      reasonsEn.push(`Estimated rate: HK$${hourlyRate}/hr (region-based)`);
-      reasonsTc.push(`估算時租：HK$${hourlyRate} / 小時（按區域估算）`);
-    } else if (hourlyRate <= 22) {
+  // Price reason — estimated lots get no numeric claim (suppressed in UI too)
+  if (hourlyRate !== undefined && hourlyRate !== null && !isEstimated) {
+    if (hourlyRate <= 22) {
       reasonsEn.push(`Competitive rate: HK$${hourlyRate}/hr`);
       reasonsTc.push(`收費相宜：HK$${hourlyRate} / 小時`);
     } else {

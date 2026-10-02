@@ -485,8 +485,8 @@ export const ParkingDetailModal: React.FC<ParkingDetailModalProps> = ({
                   <span className="text-slate-400 text-[11px] block mb-0.5">
                     {lang === 'tc' ? '全日泊 / 日泊' : 'Day Rate'}
                   </span>
-                  <span className={`text-sm sm:text-base ${lot.pricing?.dayRate ? 'font-bold text-white' : 'text-xs text-slate-400 font-medium'}`}>
-                    {lot.pricing?.dayRate ? `HK$${lot.pricing.dayRate}` : '—'}
+                  <span className={`text-sm sm:text-base ${lot.pricing?.dayRate && !lot.pricing?.estimated ? 'font-bold text-white' : 'text-xs text-slate-400 font-medium'}`}>
+                    {lot.pricing?.dayRate && !lot.pricing?.estimated ? `HK$${lot.pricing.dayRate}` : '—'}
                   </span>
                 </div>
 

@@ -145,7 +145,7 @@ export async function getCarParksBasic(): Promise<ParkingLot[]> {
             website: zhItem.website || undefined,
             heightLimit: height,
             vehicleTypes,
-            pricing: { hourlyRate, estimated: !hasOfficialPricing, dayRate: hourlyRate != null ? hourlyRate * 7 : undefined, paymentMethods },
+            pricing: { hourlyRate, estimated: !hasOfficialPricing, dayRate: hasOfficialPricing && hourlyRate != null ? hourlyRate * 7 : undefined, paymentMethods },
             facilities: { evCharging: hasEv, disabledParking: hasDis, contactlessPayment: true, covered: true },
             vacancies: [],
             dataUpdatedAt: new Date().toISOString()
@@ -180,7 +180,7 @@ export async function getVacancies(): Promise<Record<string, Vacancy[]>> {
     });
     clearTimeout(timeoutId);
     if (res.ok) {
-      const data = (await res.json()) as any;
+      const data = (await res.json()) as GovVacancyResponse;
       const results = data?.results || [];
       if (Array.isArray(results) && results.length > 0) {
         const vacanciesMap: Record<string, Vacancy[]> = {};
@@ -189,7 +189,7 @@ export async function getVacancies(): Promise<Record<string, Vacancy[]>> {
           if (!parkId) continue;
           const entries: Vacancy[] = [];
           for (const key of ['privateCar', 'motorCycle', 'LGV', 'HGV', 'coach'] as const) {
-            const v = item[key];
+            const v = item[key as keyof GovVacancyItem];
             if (Array.isArray(v) && v.length > 0) {
               const entry = v[0];
               const count = typeof entry.vacancy === 'number' && entry.vacancy >= 0 ? entry.vacancy : null;

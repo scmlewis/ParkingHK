@@ -55,38 +55,42 @@ describe('calculateParkingScore', () => {
     expect(closedResult.scoreBreakdown.totalScore).toBeLessThan(openResult.scoreBreakdown.totalScore);
   });
 
-  it('unknown vacancy scores lower than known-full (vacancy=0)', () => {
+  it('unknown vacancy scores low, close to known-full (vacancy=0)', () => {
     const unknown = makeLot({ vacancies: [] });
     const full = makeLot({
       vacancies: [{ vehicleType: 'PRIVATE_CAR', serviceCategory: 'HOURLY', vacancy: 0, updatedAt: new Date().toISOString() }]
     });
     const unknownResult = calculateParkingScore(unknown, 22.2854, 114.1587);
     const fullResult = calculateParkingScore(full, 22.2854, 114.1587);
-    expect(unknownResult.scoreBreakdown.availabilityScore).toBeLessThan(
-      fullResult.scoreBreakdown.availabilityScore + 10 // unknown (5) should be close to or below full (0+other factors)
-    );
-    // The key assertion: unknown availability (5) must not beat full (0) by a large margin
+    // Unknown (5) stays low so it never outranks decent known data,
+    // but sits just above known-full (0) since an unknown lot may still have spaces.
     expect(unknownResult.scoreBreakdown.availabilityScore).toBe(5);
     expect(fullResult.scoreBreakdown.availabilityScore).toBe(0);
+    expect(unknownResult.scoreBreakdown.availabilityScore - fullResult.scoreBreakdown.availabilityScore).toBeLessThanOrEqual(5);
   });
 
-  it('unknown price scores lower than known-expensive price', () => {
+  it('unknown price scores low, close to known-expensive price', () => {
     const unknown = makeLot({ pricing: {} });
     const expensive = makeLot({ pricing: { hourlyRate: 60 } });
     const unknownResult = calculateParkingScore(unknown, 22.2854, 114.1587);
     const expensiveResult = calculateParkingScore(expensive, 22.2854, 114.1587);
-    // Unknown price (5) should not beat expensive (2)
+    // Unknown (5) stays low so it never outranks decent known data,
+    // but sits just above known-expensive (2) since the real price may be cheaper.
     expect(unknownResult.scoreBreakdown.priceScore).toBe(5);
     expect(expensiveResult.scoreBreakdown.priceScore).toBe(2);
+    expect(unknownResult.scoreBreakdown.priceScore - expensiveResult.scoreBreakdown.priceScore).toBeLessThanOrEqual(5);
   });
 
-  it('unknown distance scores lower than known-far distance', () => {
+  it('unknown distance scores low, close to known-far distance', () => {
     const unknown = makeLot({ latitude: null, longitude: null });
     const far = makeLot({ latitude: 22.5, longitude: 114.3 }); // ~30km away
     const unknownResult = calculateParkingScore(unknown, 22.2854, 114.1587);
     const farResult = calculateParkingScore(far, 22.2854, 114.1587);
+    // Unknown (5) stays low so it never outranks decent known data,
+    // but sits just above known-far (2) since the real location may be closer.
     expect(unknownResult.scoreBreakdown.distanceScore).toBe(5);
     expect(farResult.scoreBreakdown.distanceScore).toBe(2);
+    expect(unknownResult.scoreBreakdown.distanceScore - farResult.scoreBreakdown.distanceScore).toBeLessThanOrEqual(5);
   });
 
   it('cheap lot scores higher on price than expensive lot', () => {

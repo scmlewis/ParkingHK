@@ -206,10 +206,11 @@ function MainApp() {
       });
     }
 
-    // 8. Max Hourly Rate
+    // 8. Max Hourly Rate — estimated (region-based) rates are hidden from users,
+    // so they must not filter or sort on them either. Treat estimated as unknown.
     if (isFinite(filters.maxHourlyRate) && filters.maxHourlyRate > 0) {
       result = result.filter(item => {
-        const rate = item.lot.pricing?.hourlyRate;
+        const rate = item.lot.pricing?.estimated ? null : item.lot.pricing?.hourlyRate;
         if (rate == null) return true; // include lots with unknown price
         return rate <= filters.maxHourlyRate;
       });
@@ -272,8 +273,8 @@ function MainApp() {
         return vacB - vacA;
       }
       if (sortOption === 'price') {
-        const priceA = a.lot.pricing?.hourlyRate ?? 999;
-        const priceB = b.lot.pricing?.hourlyRate ?? 999;
+        const priceA = (a.lot.pricing?.estimated ? null : a.lot.pricing?.hourlyRate) ?? 999;
+        const priceB = (b.lot.pricing?.estimated ? null : b.lot.pricing?.hourlyRate) ?? 999;
         return priceA - priceB;
       }
       return 0;
